@@ -23,6 +23,8 @@ img_dict = load(input_file)
 num_samples = len(img_dict)
 
 
+
+
 def csv_to_dict(filename):
     ret = {}
 

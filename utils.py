@@ -1,6 +1,9 @@
 import csv
+import json
+from pprint import pprint
+import collections
 
-def data_grouping():
+def data_grouping_GWHD():
     result = {}
     with open('train.csv', 'r') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -19,14 +22,33 @@ def data_grouping():
             result_count[value] = result_count[value] + 1
         else:
             result_count[value] = 1
-
+    result_count = collections.OrderedDict(sorted(result_count.items()))
     with open('gwhd_distribution.csv', 'w') as csv_file:  
         writer = csv.writer(csv_file)
         i = 1
         for key, value in result_count.items():
-            writer.writerow([i, value])
+            writer.writerow([key, value])
             i = i + 1
 
+def data_grouping_COCO():
+    with open('panoptic_val2017.json') as f:
+        data = json.load(f)
+    pprint(len(data['annotations'][5]['segments_info']))
 
-    
-data_grouping()
+    result_count = {}
+    for data in data['annotations']:
+        if len(data['segments_info']) in result_count:
+            result_count[len(data['segments_info'])] = result_count[len(data['segments_info'])] + 1
+        else:
+            result_count[len(data['segments_info'])] = 1
+    result_count = collections.OrderedDict(sorted(result_count.items()))
+    with open('coco_distribution.csv', 'w') as csv_file:  
+        writer = csv.writer(csv_file)
+        i = 1
+        for key, value in result_count.items():
+            writer.writerow([key, value])
+            i = i + 1
+
+data_grouping_COCO()    
+data_grouping_GWHD()
+

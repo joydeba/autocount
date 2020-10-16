@@ -83,7 +83,7 @@ def show_image_withAnnotation():
         csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
         # This skips the first row of the CSV file.
         next(csvreader)
-        filename, file_extension = os.path.splitext('0abbdee70.jpg')
+        filename, file_extension = os.path.splitext('6fb67942f.jpg')
         img = cv2.imread(filename+file_extension)
         for row in csvreader:
             if (row[0]== filename):

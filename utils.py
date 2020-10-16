@@ -4,6 +4,11 @@ from pprint import pprint
 import collections
 import scipy.io
 import glob
+import cv2
+import ast
+# from PIL import Image
+import os
+import numpy as np
 
 def data_grouping_GWHD():
     result = {}
@@ -70,6 +75,30 @@ def data_grouping_BSR():
             writer.writerow([key, value])
             i = i + 1        
 
+
+
+def show_image_withAnnotation():    
+
+    with open('train.csv', 'r') as csvfile:
+        csvreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        # This skips the first row of the CSV file.
+        next(csvreader)
+        filename, file_extension = os.path.splitext('0abbdee70.jpg')
+        img = cv2.imread(filename+file_extension)
+        for row in csvreader:
+            if (row[0]== filename):
+                pts = ast.literal_eval(row[3])
+                x1 = int(pts[0])
+                y1 = int(pts[1])
+                x2 = int(pts[0] + pts[2])
+                y2 = int(pts[1] +pts[3])
+                color = list(np.random.random(size=3) * 256)
+                cv2.rectangle(img, (x1,y1), (x2,y2), color, 4)
+        cv2.imwrite(filename+"_ann"+file_extension,img)
+        # cv2.imshow("lalala", img)
+        k = cv2.waitKey(0) # 0==wait forever
+
 # data_grouping_COCO()    
 # data_grouping_GWHD()
-data_grouping_BSR()
+# data_grouping_BSR()
+show_image_withAnnotation()

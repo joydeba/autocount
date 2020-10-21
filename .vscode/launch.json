@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--target", "sajit_mini", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8"],
+            "args": ["--target", "sajit_tiny", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8", "--filetype", "png"],
             "console": "integratedTerminal",
             "env": {
                 "DISPLAY": "localhost:10.0"

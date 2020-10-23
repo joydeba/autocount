@@ -9,7 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--target", "sajit_tiny", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8", "--filetype", "png"],
+            // "args": ["--target", "sajit_tiny", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8", "--filetype", "png"],
+            "args": ["dataset_softmax", "wheat_head_count_fixed.csv", "16"],
             "console": "integratedTerminal",
             "env": {
                 "DISPLAY": "localhost:10.0"

@@ -62,25 +62,21 @@ def write_activation_images(output, im_target):
         c = c / np.max(c) * 255.
         cv2.imwrite('output-{0}.png'.format(i), c)
 
-
+# Input: directory and type, Output list of file paths, example - ['sajit_tiny/IMG_0128.PNG', 'sajit_tiny/IMG_0350.PNG']
 def get_image_filenames(dir_path, file_type):
     all_image_filenames = []
-
     if file_type == 'png' or file_type == 'PNG':
         ext = '.png'
     else:
         ext = '.jpg'
-
     for root, dirnames, filenames in os.walk(dir_path):
-
         for filename in [filename for filename in filenames if filename.endswith(ext) or filename.endswith(ext.upper())]:
             all_image_filenames.append(os.path.join(dir_path, filename))
-
     return all_image_filenames
 
 
 def slic(im):
-    # slic
+    # slic, Segments image using k-means clustering in Color-(x,y,z) space.
     labels = segmentation.slic(im, compactness=args.compactness, n_segments=args.num_superpixels)
     labels = labels.reshape(im.shape[0] * im.shape[1])
     u_labels = np.unique(labels)
@@ -88,18 +84,17 @@ def slic(im):
     for i in range(len(u_labels)):
         l_inds.append(np.where(labels == u_labels[i])[0])
 
-    return l_inds
+    return l_inds # Unique k-means clustering label indexes  
 
 
 # Match images and labels
-all_image_paths = get_image_filenames(args.target, file_type=args.filetype)
+all_image_paths = get_image_filenames(args.target, file_type=args.filetype) # ['sajit_tiny/IMG_0128.PNG', 'sajit_tiny/IMG_0350.PNG', 'sajit_tiny/IMG_0265.PNG']
 sample_index = 0
 
-num_samples = len(all_image_paths)
+num_samples = len(all_image_paths) # 3
 print('Num samples: {0}'.format(num_samples))
 
-
-# CNN model
+# CNN model, layers, example 3 input dim
 class MyNet(nn.Module):
     def __init__(self,input_dim):
         super(MyNet, self).__init__()
@@ -112,7 +107,7 @@ class MyNet(nn.Module):
             self.bn2.append( nn.BatchNorm2d(args.nChannel) )
         self.conv3 = nn.Conv2d(args.nChannel, args.nChannel, kernel_size=1, stride=1, padding=0 )
         self.bn3 = nn.BatchNorm2d(args.nChannel)
-
+    # learning forward
     def forward(self, x):
         x = self.conv1(x)
         x = F.relu( x )
@@ -132,7 +127,7 @@ if use_cuda:
 model.train()
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
-label_colours = np.random.randint(255,size=(100,3))
+label_colours = np.random.randint(255,size=(100,3)) # 100 random colors, array([252, 206,  72])
 
 data = None
 target = None
@@ -151,32 +146,32 @@ for batch_idx in range(args.maxIter):
 
     # Load it up
     im = cv2.imread(sample_filename)
-    data = torch.from_numpy(np.array([im.transpose((2, 0, 1)).astype('float32') / 255.]))
+    data = torch.from_numpy(np.array([im.transpose((2, 0, 1)).astype('float32') / 255.])) # Image transposed and converted to tensor via numpy
     if use_cuda:
         data = data.cuda()
     data = Variable(data)
 
-    l_inds = slic(im)
+    l_inds = slic(im) # k-means label indexes 
 
     # forwarding
-    optimizer.zero_grad()
+    optimizer.zero_grad() # not tracking gradients 
 
-    output = model( data )[0]
+    output = model( data )[0] # 1 Image(data) to model, output from all layers 
 
-    output = output.permute( 1, 2, 0 ).contiguous().view( -1, args.nChannel )
-    ignore, target = torch.max( output, 1 )
-    im_target = target.data.cpu().numpy()
+    output = output.permute( 1, 2, 0 ).contiguous().view( -1, args.nChannel ) # multidimensional rotated tensor to previous, order of elements would be same, last reshape 
+    ignore, target = torch.max( output, 1 ) # Returns the maximum value of all elements in the input tensor.
+    im_target = target.data.cpu().numpy() # Max as target in numpy
 
-    nLabels = len(np.unique(im_target))
+    nLabels = len(np.unique(im_target)) # Length, found once 32 
 
     if args.visualize:
-        im_target_rgb = np.array([label_colours[ c % 100 ] for c in im_target])
-        im_target_rgb = im_target_rgb.reshape( im.shape ).astype( np.uint8 )
+        im_target_rgb = np.array([label_colours[ c % 100 ] for c in im_target]) # Randomly color the max target
+        im_target_rgb = im_target_rgb.reshape( im.shape ).astype( np.uint8 ) # Reshape 
        
         cv2.imshow( "output", im_target_rgb )
         cv2.waitKey(10)
 
-    # superpixel refinement
+    # superpixel refinement, output k-means indexes will be used here 
     # TODO: use Torch Variable instead of numpy for faster calculation
     for i in range(len(l_inds)):
         labels_per_sp = im_target[ l_inds[ i ] ]
@@ -190,22 +185,22 @@ for batch_idx in range(args.maxIter):
     if use_cuda:
         target = target.cuda()
     target = Variable( target )
-    loss = loss_fn(output, target)
+    loss = loss_fn(output, target) # CNN output to, max + superpixel refinemend
     loss.backward()
     optimizer.step()
 
-    print (batch_idx, '/', args.maxIter, ':', nLabels, loss.item())
+    print ('Step', batch_idx, '/', args.maxIter, ': Labels and Loss', nLabels, loss.item())
 
     if nLabels <= args.minLabels:
         print ("nLabels", nLabels, "reached minLabels", args.minLabels, ".")
         break
 
 # User input
-output = model(data)[0]
+output = model(data)[0] # Did not understand this input
 output = nn.functional.softmax(output, dim=2)
 output = output.data.cpu().numpy()
 
-write_activation_images(output, target.cpu().numpy())
+write_activation_images(output, target.cpu().numpy()) # Unique channel are writing
 
 print('Channel images output to working directory.')
 selected_channel = input("Which channel contains the organs? ")
@@ -213,7 +208,7 @@ selected_channel = int(selected_channel)
 
 print('Selected channel {0}'.format(selected_channel))
 
-# Save the images in memory
+# Save the images in memory, Saving Segmented images using dictionary 
 
 image_dict = {}
 
@@ -225,7 +220,7 @@ for filename in all_image_paths:
 
     im = cv2.imread(filename)
 
-    data = torch.from_numpy(np.array([im.transpose((2, 0, 1)).astype('float32') / 255.]))
+    data = torch.from_numpy(np.array([im.transpose((2, 0, 1)).astype('float32') / 255.])) # Again Input 
     if use_cuda:
         data = data.cuda()
     data = Variable(data)

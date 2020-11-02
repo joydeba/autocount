@@ -100,7 +100,15 @@ def show_image_withAnnotation():
 
 
 import torch.nn as nn
-import torch.nn.functional as F# define the NN architecture
+import torch.nn.functional as F
+import torch
+import numpy as np
+from torchvision import datasets
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+# %matplotlib inline
+
+# Define the NN architecture
 class ConvDenoiser(nn.Module):
     def __init__(self):
         super(ConvDenoiser, self).__init__()
@@ -145,18 +153,8 @@ class ConvDenoiser(nn.Module):
         x = F.sigmoid(self.conv_out(x))
                 
         return x# initialize the NN
-model = ConvDenoiser()
-print(model)
 
-
-
-
-def denoising_autoencoder():
-    import torch
-    import numpy as np
-    from torchvision import datasets
-    import torchvision.transforms as transforms    
-
+def data_loading():
     # convert data to torch.FloatTensor
     transform = transforms.ToTensor()
     # load the training and test datasets
@@ -168,11 +166,10 @@ def denoising_autoencoder():
     batch_size = 20
     # prepare data loaders
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)    
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)     
+    return train_loader, test_loader
 
-    import matplotlib.pyplot as plt
-    # %matplotlib inline
-        
+def data_visualize(train_loader):
     # obtain one batch of training images
     dataiter = iter(train_loader)
     images, labels = dataiter.next()
@@ -184,18 +181,21 @@ def denoising_autoencoder():
     fig = plt.figure(figsize = (5,5)) 
     ax = fig.add_subplot(111)
     ax.imshow(img, cmap='gray')
+    plt.show()
 
-    # specify loss function
-    criterion = nn.MSELoss()# specify loss function
+def training_model(model, train_loader):
+    # Specify loss function
+    criterion = nn.MSELoss()
+    # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    # number of epochs to train the model
+    # Number of epochs to train the model
     n_epochs = 4
 
-    # for adding noise to images
+    # For adding noise to images
     noise_factor=0.5 
 
     for epoch in range(1, n_epochs+1):
-        # monitor training loss
+        # Monitor training loss
         train_loss = 0.0
         
         ###################
@@ -230,7 +230,19 @@ def denoising_autoencoder():
         print('Epoch: {} \tTraining Loss: {:.6f}'.format(
             epoch, 
             train_loss
-            ))
+            ))    
+
+def denoising_autoencoder():
+    # Load Data
+    train_loader, test_loader = data_loading()        
+    # Visualize Data
+    data_visualize(train_loader)
+    # Construct Model
+    model = ConvDenoiser()
+    print(model)
+
+    # Training
+    training_model(model, train_loader)
 
 
     # obtain one batch of test images
@@ -250,7 +262,7 @@ def denoising_autoencoder():
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-
+    plt.show()
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()

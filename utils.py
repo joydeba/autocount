@@ -106,9 +106,11 @@ import numpy as np
 from torchvision import datasets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
+import scipy.misc
 # %matplotlib inline
 # For adding noise to images
-noise_factor=0.5 
+noise_factor=0.5
+batch_size = 20 
 
 # Define the NN architecture
 class ConvDenoiser(nn.Module):
@@ -165,7 +167,7 @@ def data_loading():
     # Create training and test dataloaders
     num_workers = 0
     # how many samples per batch to load
-    batch_size = 20
+    
     # prepare data loaders
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)     
@@ -180,10 +182,13 @@ def data_visualize(train_loader):
     # get one image from the batch
     img = np.squeeze(images[0])
     
+
     fig = plt.figure(figsize = (5,5)) 
     ax = fig.add_subplot(111)
     ax.imshow(img, cmap='gray')
     plt.show()
+    plt.axis('off')
+    plt.savefig("Sample.jpeg")
 
 def training_model(model, train_loader):
     # Specify loss function
@@ -236,17 +241,25 @@ def training_model(model, train_loader):
 def testing_model(model, test_loader):
     # obtain one batch of test images
     dataiter = iter(test_loader)
-    images, labels = dataiter.next()# add noise to the test images
+    images, labels = dataiter.next()
+    # add noise to the test images
     noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-    noisy_imgs = np.clip(noisy_imgs, 0., 1.)# get sample outputs
+    noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+    # get sample outputs
     output = model(noisy_imgs)
     # prep images for display
-    noisy_imgs = noisy_imgs.numpy()# output is resized into a batch of iages
+    noisy_imgs = noisy_imgs.numpy()
+    # output is resized into a batch of iages
     output = output.view(batch_size, 1, 28, 28)
     # use detach when it's an output that requires_grad
-    output = output.detach().numpy()# plot the first ten input images and then reconstructed images
-    fig, axes = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,4))# input images on top row, reconstructions on bottom
+    output = output.detach().numpy()
+    # plot the first ten input images and then reconstructed images
+    fig, axes = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,4))
+    # input images on top row, reconstructions on bottom
+    i = 0
     for noisy_imgs, row in zip([noisy_imgs, output], axes):
+        scipy.misc.imsave('outfile'+i+'.jpg', noisy_imgs)
+        i = i + 1
         for img, ax in zip(noisy_imgs, row):
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)

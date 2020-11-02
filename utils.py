@@ -107,6 +107,8 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 # %matplotlib inline
+# For adding noise to images
+noise_factor=0.5 
 
 # Define the NN architecture
 class ConvDenoiser(nn.Module):
@@ -191,8 +193,7 @@ def training_model(model, train_loader):
     # Number of epochs to train the model
     n_epochs = 4
 
-    # For adding noise to images
-    noise_factor=0.5 
+
 
     for epoch in range(1, n_epochs+1):
         # Monitor training loss
@@ -232,19 +233,7 @@ def training_model(model, train_loader):
             train_loss
             ))    
 
-def denoising_autoencoder():
-    # Load Data
-    train_loader, test_loader = data_loading()        
-    # Visualize Data
-    data_visualize(train_loader)
-    # Construct Model
-    model = ConvDenoiser()
-    print(model)
-
-    # Training
-    training_model(model, train_loader)
-
-
+def testing_model(model, test_loader):
     # obtain one batch of test images
     dataiter = iter(test_loader)
     images, labels = dataiter.next()# add noise to the test images
@@ -262,7 +251,22 @@ def denoising_autoencoder():
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-    plt.show()
+    plt.show()    
+
+
+def denoising_autoencoder():
+    # Load Data
+    train_loader, test_loader = data_loading()        
+    # Visualize Data
+    data_visualize(train_loader)
+    # Construct Model
+    model = ConvDenoiser()
+    print(model)
+    # Training
+    training_model(model, train_loader)
+    # Testing
+    testing_model(model, test_loader)
+
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()

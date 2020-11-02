@@ -189,7 +189,7 @@ def denoising_autoencoder():
     criterion = nn.MSELoss()# specify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # number of epochs to train the model
-    n_epochs = 20
+    n_epochs = 4
 
     # for adding noise to images
     noise_factor=0.5 
@@ -231,6 +231,25 @@ def denoising_autoencoder():
             epoch, 
             train_loss
             ))
+
+
+    # obtain one batch of test images
+    dataiter = iter(test_loader)
+    images, labels = dataiter.next()# add noise to the test images
+    noisy_imgs = images + noise_factor * torch.randn(*images.shape)
+    noisy_imgs = np.clip(noisy_imgs, 0., 1.)# get sample outputs
+    output = model(noisy_imgs)
+    # prep images for display
+    noisy_imgs = noisy_imgs.numpy()# output is resized into a batch of iages
+    output = output.view(batch_size, 1, 28, 28)
+    # use detach when it's an output that requires_grad
+    output = output.detach().numpy()# plot the first ten input images and then reconstructed images
+    fig, axes = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,4))# input images on top row, reconstructions on bottom
+    for noisy_imgs, row in zip([noisy_imgs, output], axes):
+        for img, ax in zip(noisy_imgs, row):
+            ax.imshow(np.squeeze(img), cmap='gray')
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
 
 
 # data_grouping_COCO()    

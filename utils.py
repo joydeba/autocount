@@ -118,7 +118,8 @@ class ConvDenoiser(nn.Module):
         super(ConvDenoiser, self).__init__()
         ## encoder layers ##
         # conv layer (depth from 1 --> 32), 3x3 kernels
-        self.conv1 = nn.Conv2d(1, 32, 3, padding=1)  
+        # self.conv1 = nn.Conv2d(1, 32, 3, padding=1) 
+        self.conv1 = nn.Conv2d(3, 32, 3, padding=1)  
         # conv layer (depth from 32 --> 16), 3x3 kernels
         self.conv2 = nn.Conv2d(32, 16, 3, padding=1)
         # conv layer (depth from 16 --> 8), 3x3 kernels
@@ -128,12 +129,16 @@ class ConvDenoiser(nn.Module):
         
         ## decoder layers ##
         # transpose layer, a kernel of 2 and a stride of 2 will increase the spatial dims by 2
-        self.t_conv1 = nn.ConvTranspose2d(8, 8, 3, stride=2)  # kernel_size=3 to get to a 7x7 image output
+        # self.t_conv1 = nn.ConvTranspose2d(8, 8, 3, stride=2)  # kernel_size=3 to get to a 7x7 image output
+        self.t_conv1 = nn.ConvTranspose2d(8, 8, 2, stride=2)  # kernel_size=3 to get to a 7x7 image output
         # two more transpose layers with a kernel of 2
+        # self.t_conv2 = nn.ConvTranspose2d(8, 16, 2, stride=2)
         self.t_conv2 = nn.ConvTranspose2d(8, 16, 2, stride=2)
-        self.t_conv3 = nn.ConvTranspose2d(16, 32, 2, stride=2)
+        # self.t_conv3 = nn.ConvTranspose2d(16, 32, 2, stride=2)
+        self.t_conv3 = nn.ConvTranspose2d(16, 32, 3, stride=2)
         # one, final, normal conv layer to decrease the depth
-        self.conv_out = nn.Conv2d(32, 1, 3, padding=1)
+        # self.conv_out = nn.Conv2d(32, 1, 3, padding=1)
+        self.conv_out = nn.Conv2d(32, 3, 3, padding=1)
         
     def forward(self, x):
         ## encode ##
@@ -162,8 +167,10 @@ def data_loading():
     # convert data to torch.FloatTensor
     transform = transforms.ToTensor()
     # load the training and test datasets
-    train_data = datasets.MNIST(root='data', train=True, download=True, transform=transform)
-    test_data = datasets.MNIST(root='data', train=False, download=True, transform=transform)
+    # train_data = datasets.MNIST(root='data', train=True, download=True, transform=transform)
+    train_data = datasets.ImageFolder( root="dataset", transform=transform)
+    # test_data = datasets.MNIST(root='data', train=False, download=True, transform=transform)
+    test_data = datasets.ImageFolder( root="dataset", transform=transform)
     # Create training and test dataloaders
     num_workers = 0
     # how many samples per batch to load
@@ -185,10 +192,12 @@ def data_visualize(train_loader):
 
     fig = plt.figure(figsize = (5,5)) 
     ax = fig.add_subplot(111)
-    ax.imshow(img, cmap='gray')
+    # ax.imshow(img, cmap='gray')
+    img = np.transpose( img, (1, 2, 0))
+    ax.imshow(img)
+    # plt.axis('off')
+    plt.savefig("Sample.jpeg", dpi=100)
     plt.show()
-    plt.axis('off')
-    plt.savefig("Sample.jpeg")
 
 def training_model(model, train_loader):
     # Specify loss function
@@ -221,6 +230,7 @@ def training_model(model, train_loader):
             optimizer.zero_grad()
             ## forward pass: compute predicted outputs by passing *noisy* images to the model
             outputs = model(noisy_imgs)
+            # outputs = model(noisy_imgs[None, ...])
             # calculate the loss
             # the "target" is still the original, not-noisy images
             loss = criterion(outputs, images)
@@ -250,7 +260,7 @@ def testing_model(model, test_loader):
     # prep images for display
     noisy_imgs = noisy_imgs.numpy()
     # output is resized into a batch of iages
-    output = output.view(batch_size, 1, 28, 28)
+    output = output.view(batch_size, 1, 481, 321)
     # use detach when it's an output that requires_grad
     output = output.detach().numpy()
     # plot the first ten input images and then reconstructed images
@@ -258,12 +268,12 @@ def testing_model(model, test_loader):
     # input images on top row, reconstructions on bottom
     i = 0
     for noisy_imgs, row in zip([noisy_imgs, output], axes):
-        i = i + 1
         for img, ax in zip(noisy_imgs, row):
-            im = Image.fromarray(np.squeeze(img))
+            im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
             if im.mode != 'RGB':
                 im = im.convert('RGB')
             im.save('outfile'+str(i)+'.png')
+            i = i + 1
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)

@@ -106,7 +106,7 @@ import numpy as np
 from torchvision import datasets
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
-import scipy.misc
+from PIL import Image
 # %matplotlib inline
 # For adding noise to images
 noise_factor=0.5
@@ -196,7 +196,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 4
+    n_epochs = 1
 
 
 
@@ -258,9 +258,10 @@ def testing_model(model, test_loader):
     # input images on top row, reconstructions on bottom
     i = 0
     for noisy_imgs, row in zip([noisy_imgs, output], axes):
-        scipy.misc.imsave('outfile'+i+'.jpg', noisy_imgs)
         i = i + 1
         for img, ax in zip(noisy_imgs, row):
+            im = Image.fromarray(np.squeeze(img))
+            im.save('outfile'+str(i)+'.png')
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)

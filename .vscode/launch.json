@@ -13,7 +13,7 @@
             // "args": ["dataset_softmax", "Datasets/dataset/dataset.csv", "16"],
             "console": "integratedTerminal",
             "env": {
-                "DISPLAY": "localhost:10.0"
+                // "DISPLAY": "localhost:10.0"
             },
         }
     ]

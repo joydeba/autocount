@@ -196,7 +196,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 1
+    n_epochs = 5
 
 
 
@@ -261,6 +261,8 @@ def testing_model(model, test_loader):
         i = i + 1
         for img, ax in zip(noisy_imgs, row):
             im = Image.fromarray(np.squeeze(img))
+            if im.mode != 'RGB':
+                im = im.convert('RGB')
             im.save('outfile'+str(i)+'.png')
             ax.imshow(np.squeeze(img), cmap='gray')
             ax.get_xaxis().set_visible(False)

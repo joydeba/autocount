@@ -110,7 +110,7 @@ from PIL import Image
 # %matplotlib inline
 # For adding noise to images
 noise_factor=0.5
-batch_size = 20 
+batch_size = 1 
 
 # Define the NN architecture
 class ConvDenoiser(nn.Module):
@@ -254,13 +254,14 @@ def testing_model(model, test_loader):
     images, labels = dataiter.next()
     # add noise to the test images
     noisy_imgs = images + noise_factor * torch.randn(*images.shape)
+    # noisy_imgs = images
     noisy_imgs = np.clip(noisy_imgs, 0., 1.)
     # get sample outputs
     output = model(noisy_imgs)
     # prep images for display
     noisy_imgs = noisy_imgs.numpy()
     # output is resized into a batch of iages
-    output = output.view(batch_size, 1, 481, 321)
+    output = output.view(batch_size, 3, 321, 481)
     # use detach when it's an output that requires_grad
     output = output.detach().numpy()
     # plot the first ten input images and then reconstructed images
@@ -269,12 +270,14 @@ def testing_model(model, test_loader):
     i = 0
     for noisy_imgs, row in zip([noisy_imgs, output], axes):
         for img, ax in zip(noisy_imgs, row):
+            img = np.transpose( img, (1, 2, 0))
             im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
             if im.mode != 'RGB':
                 im = im.convert('RGB')
             im.save('outfile'+str(i)+'.png')
             i = i + 1
-            ax.imshow(np.squeeze(img), cmap='gray')
+            # ax.imshow(np.squeeze(img), cmap='gray')
+            ax.imshow(img)
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
     plt.show()    

@@ -110,7 +110,7 @@ from PIL import Image
 # %matplotlib inline
 # For adding noise to images
 noise_factor=0.5
-batch_size = 1 
+batch_size = 3 
 
 # Define the NN architecture
 class ConvDenoiser(nn.Module):
@@ -253,8 +253,8 @@ def testing_model(model, test_loader):
     dataiter = iter(test_loader)
     images, labels = dataiter.next()
     # add noise to the test images
-    noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-    # noisy_imgs = images
+    # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
+    noisy_imgs = images
     noisy_imgs = np.clip(noisy_imgs, 0., 1.)
     # get sample outputs
     output = model(noisy_imgs)

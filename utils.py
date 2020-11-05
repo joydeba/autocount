@@ -163,9 +163,63 @@ class ConvDenoiser(nn.Module):
                 
         return x# initialize the NN
 
+
+
+# the autoencoder network
+class ConvAutoencoder(nn.Module):
+    def __init__(self):
+        super(ConvAutoencoder, self).__init__()
+        # encoder layers
+        self.enc1 = nn.Conv2d(3, 512, kernel_size=3, padding=1)
+        self.enc2 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        self.enc3 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
+        self.enc4 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
+        
+        # decoder layers
+        self.dec1 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)  
+        self.dec2 = nn.ConvTranspose2d(64, 128, kernel_size=2, stride=2)
+        self.dec3 = nn.ConvTranspose2d(128, 256, kernel_size=2, stride=2)
+        self.dec4 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
+        self.out = nn.Conv2d(512, 3, kernel_size=3, padding=1)
+        
+        self.bn1 = nn.BatchNorm2d(512)
+        self.bn2 = nn.BatchNorm2d(256)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.bn4 = nn.BatchNorm2d(64)        
+        self.pool = nn.MaxPool2d(2, 2)
+    def forward(self, x):
+        # encode
+        x = F.relu(self.enc1(x))
+        x = (self.bn1(x))
+        x = self.pool(x)
+        x = F.relu(self.enc2(x))
+        x = (self.bn2(x))
+        x = self.pool(x)
+        x = F.relu(self.enc3(x))
+        x = (self.bn3(x))
+        x = self.pool(x)
+        x = F.relu(self.enc4(x))
+        x = (self.bn4(x))
+        x = self.pool(x) # the latent space representation
+        
+        # decode
+        x = F.relu(self.dec1(x))
+        x = (self.bn4(x))
+        x = F.relu(self.dec2(x))
+        x = (self.bn3(x))
+        x = F.relu(self.dec3(x))
+        x = (self.bn2(x))
+        x = F.relu(self.dec4(x))
+        x = (self.bn1(x))
+        x = torch.sigmoid(self.out(x))
+        return x
+
+
 def data_loading():
     # convert data to torch.FloatTensor
-    transform = transforms.ToTensor()
+    # transform = transforms.ToTensor()
+    transform = transforms.Compose([transforms.Resize([int(320), int(480)]),
+                                transforms.ToTensor()])
     # load the training and test datasets
     # train_data = datasets.MNIST(root='data', train=True, download=True, transform=transform)
     train_data = datasets.ImageFolder( root="dataset", transform=transform)
@@ -253,15 +307,15 @@ def testing_model(model, test_loader):
     dataiter = iter(test_loader)
     images, labels = dataiter.next()
     # add noise to the test images
-    # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-    noisy_imgs = images
+    noisy_imgs = images + noise_factor * torch.randn(*images.shape)
+    # noisy_imgs = images
     noisy_imgs = np.clip(noisy_imgs, 0., 1.)
     # get sample outputs
     output = model(noisy_imgs)
     # prep images for display
     noisy_imgs = noisy_imgs.numpy()
     # output is resized into a batch of iages
-    output = output.view(batch_size, 3, 321, 481)
+    output = output.view(batch_size, 3, 320, 480)
     # use detach when it's an output that requires_grad
     output = output.detach().numpy()
     # plot the first ten input images and then reconstructed images
@@ -289,7 +343,8 @@ def denoising_autoencoder():
     # Visualize Data
     data_visualize(train_loader)
     # Construct Model
-    model = ConvDenoiser()
+    # model = ConvDenoiser()
+    model = ConvAutoencoder()
     print(model)
     # Training
     training_model(model, train_loader)

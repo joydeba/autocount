@@ -189,8 +189,8 @@ class ConvAutoencoder(nn.Module):
         # self.pool = nn.MaxPool2d(2, 2)
 
         # encoder layers
-        self.enc0 = nn.Conv2d(3, 2048, kernel_size=3, padding=1)
-        self.enc1 = nn.Conv2d(2048, 1024, kernel_size=3, padding=1)
+        # self.enc0 = nn.Conv2d(3, 2048, kernel_size=3, padding=1)
+        self.enc1 = nn.Conv2d(3, 1024, kernel_size=3, padding=1)
         self.enc2 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
         self.enc3 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
         # self.enc4 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
@@ -202,10 +202,10 @@ class ConvAutoencoder(nn.Module):
         self.dec2 = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2)
         self.dec3 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
         self.dec4 = nn.ConvTranspose2d(512, 1024, kernel_size=2, stride=2)
-        self.dec5 = nn.ConvTranspose2d(1024, 2048, kernel_size=2, stride=2)
-        self.out = nn.Conv2d(2048, 3, kernel_size=3, padding=1)
+        # self.dec5 = nn.ConvTranspose2d(1024, 2048, kernel_size=2, stride=2)
+        self.out = nn.Conv2d(1024, 3, kernel_size=3, padding=1)
         
-        self.bn0 = nn.BatchNorm2d(2048)
+        # self.bn0 = nn.BatchNorm2d(2048)
         self.bn1 = nn.BatchNorm2d(1024)
         self.bn2 = nn.BatchNorm2d(512)
         self.bn3 = nn.BatchNorm2d(256)
@@ -215,9 +215,9 @@ class ConvAutoencoder(nn.Module):
 
     def forward(self, x):
         # encode
-        x = F.relu(self.enc0(x))
-        x = (self.bn0(x))
-        x = self.pool(x)        
+        # x = F.relu(self.enc0(x))
+        # x = (self.bn0(x))
+        # x = self.pool(x)        
         x = F.relu(self.enc1(x))
         x = (self.bn1(x))
         x = self.pool(x)
@@ -246,8 +246,8 @@ class ConvAutoencoder(nn.Module):
         x = (self.bn2(x))
         x = F.relu(self.dec4(x))
         x = (self.bn1(x))
-        x = F.relu(self.dec5(x))
-        x = (self.bn0(x))        
+        # x = F.relu(self.dec5(x))
+        # x = (self.bn0(x))        
         x = torch.sigmoid(self.out(x))
         return x
 

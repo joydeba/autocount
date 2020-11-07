@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            // "args": ["--target", "Datasets/dataset", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8", "--filetype", "jpg"],
+            "args": ["--target", "Datasets/Preprocessed", "--output", "dataset_softmax", "--nChannel", "32", "--minLabels", "8", "--filetype", "png"],
             // "args": ["dataset_softmax", "Datasets/dataset/dataset.csv", "16"],
             "console": "integratedTerminal",
             "env": {

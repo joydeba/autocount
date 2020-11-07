@@ -169,26 +169,55 @@ class ConvDenoiser(nn.Module):
 class ConvAutoencoder(nn.Module):
     def __init__(self):
         super(ConvAutoencoder, self).__init__()
+        # # encoder layers
+        # self.enc1 = nn.Conv2d(3, 512, kernel_size=3, padding=1)
+        # self.enc2 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        # self.enc3 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
+        # self.enc4 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
+        
+        # # decoder layers
+        # self.dec1 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)  
+        # self.dec2 = nn.ConvTranspose2d(64, 128, kernel_size=2, stride=2)
+        # self.dec3 = nn.ConvTranspose2d(128, 256, kernel_size=2, stride=2)
+        # self.dec4 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
+        # self.out = nn.Conv2d(512, 3, kernel_size=3, padding=1)
+        
+        # self.bn1 = nn.BatchNorm2d(512)
+        # self.bn2 = nn.BatchNorm2d(256)
+        # self.bn3 = nn.BatchNorm2d(128)
+        # self.bn4 = nn.BatchNorm2d(64)        
+        # self.pool = nn.MaxPool2d(2, 2)
+
         # encoder layers
-        self.enc1 = nn.Conv2d(3, 512, kernel_size=3, padding=1)
-        self.enc2 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
-        self.enc3 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
-        self.enc4 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
+        self.enc0 = nn.Conv2d(3, 2048, kernel_size=3, padding=1)
+        self.enc1 = nn.Conv2d(2048, 1024, kernel_size=3, padding=1)
+        self.enc2 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
+        self.enc3 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        # self.enc4 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
+        # self.enc5 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
         
         # decoder layers
-        self.dec1 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)  
-        self.dec2 = nn.ConvTranspose2d(64, 128, kernel_size=2, stride=2)
-        self.dec3 = nn.ConvTranspose2d(128, 256, kernel_size=2, stride=2)
-        self.dec4 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
-        self.out = nn.Conv2d(512, 3, kernel_size=3, padding=1)
+        # self.dec0 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)
+        # self.dec1 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2)  
+        self.dec2 = nn.ConvTranspose2d(256, 256, kernel_size=2, stride=2)
+        self.dec3 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
+        self.dec4 = nn.ConvTranspose2d(512, 1024, kernel_size=2, stride=2)
+        self.dec5 = nn.ConvTranspose2d(1024, 2048, kernel_size=2, stride=2)
+        self.out = nn.Conv2d(2048, 3, kernel_size=3, padding=1)
         
-        self.bn1 = nn.BatchNorm2d(512)
-        self.bn2 = nn.BatchNorm2d(256)
-        self.bn3 = nn.BatchNorm2d(128)
-        self.bn4 = nn.BatchNorm2d(64)        
+        self.bn0 = nn.BatchNorm2d(2048)
+        self.bn1 = nn.BatchNorm2d(1024)
+        self.bn2 = nn.BatchNorm2d(512)
+        self.bn3 = nn.BatchNorm2d(256)
+        # self.bn4 = nn.BatchNorm2d(128)
+        # self.bn5 = nn.BatchNorm2d(64)        
         self.pool = nn.MaxPool2d(2, 2)
+
     def forward(self, x):
         # encode
+        x = F.relu(self.enc0(x))
+        x = (self.bn0(x))
+        x = self.pool(x)        
         x = F.relu(self.enc1(x))
         x = (self.bn1(x))
         x = self.pool(x)
@@ -198,19 +227,27 @@ class ConvAutoencoder(nn.Module):
         x = F.relu(self.enc3(x))
         x = (self.bn3(x))
         x = self.pool(x)
-        x = F.relu(self.enc4(x))
-        x = (self.bn4(x))
-        x = self.pool(x) # the latent space representation
+        # x = F.relu(self.enc4(x))
+        # x = (self.bn4(x))
+        # x = self.pool(x)
+        # x = F.relu(self.enc5(x))
+        # x = (self.bn5(x))
+        # x = self.pool(x)
+        # the latent space representation
         
         # decode
-        x = F.relu(self.dec1(x))
-        x = (self.bn4(x))
+        # x = F.relu(self.dec0(x))
+        # x = (self.bn5(x))
+        # x = F.relu(self.dec1(x))
+        # x = (self.bn4(x))
         x = F.relu(self.dec2(x))
         x = (self.bn3(x))
         x = F.relu(self.dec3(x))
         x = (self.bn2(x))
         x = F.relu(self.dec4(x))
         x = (self.bn1(x))
+        x = F.relu(self.dec5(x))
+        x = (self.bn0(x))        
         x = torch.sigmoid(self.out(x))
         return x
 

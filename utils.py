@@ -366,6 +366,10 @@ def testing_model(model, test_loader):
             im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
             if im.mode != 'RGB':
                 im = im.convert('RGB')
+            bpixel = (0, 0)
+            newcolor = (255,)*3
+            if not any(im.getpixel(bpixel)) and not any(im.getpixel(newcolor)):
+                im.putpixel(bpixel)    
             im.save('outfile'+str(i)+'.png')
             i = i + 1
             # ax.imshow(np.squeeze(img), cmap='gray')

@@ -189,9 +189,9 @@ class ConvAutoencoder(nn.Module):
         # self.pool = nn.MaxPool2d(2, 2)
 
         # encoder layers
-        self.enc0 = nn.Conv2d(3, 2048, kernel_size=3, padding=1)
-        self.enc1 = nn.Conv2d(2048, 1024, kernel_size=3, padding=1)
-        self.enc2 = nn.Conv2d(1024, 512, kernel_size=3, padding=1)
+        self.enc0 = nn.Conv2d(3, 512, kernel_size=3, padding=1)
+        self.enc1 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
+        self.enc2 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
         # self.enc3 = nn.Conv2d(512, 256, kernel_size=3, padding=1)
         # self.enc4 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
         # self.enc5 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
@@ -200,14 +200,14 @@ class ConvAutoencoder(nn.Module):
         # self.dec0 = nn.ConvTranspose2d(64, 64, kernel_size=2, stride=2)
         # self.dec1 = nn.ConvTranspose2d(64, 128, kernel_size=2, stride=2)  
         # self.dec2 = nn.ConvTranspose2d(128, 256, kernel_size=2, stride=2)
-        self.dec3 = nn.ConvTranspose2d(512, 512, kernel_size=2, stride=2)
-        self.dec4 = nn.ConvTranspose2d(512, 1024, kernel_size=2, stride=2)
-        self.dec5 = nn.ConvTranspose2d(1024, 2048, kernel_size=2, stride=2)
-        self.out = nn.Conv2d(2048, 3, kernel_size=3, padding=1)
+        self.dec3 = nn.ConvTranspose2d(128, 128, kernel_size=2, stride=2)
+        self.dec4 = nn.ConvTranspose2d(128, 256, kernel_size=2, stride=2)
+        self.dec5 = nn.ConvTranspose2d(256, 512, kernel_size=2, stride=2)
+        self.out = nn.Conv2d(512, 3, kernel_size=3, padding=1)
         
-        self.bn0 = nn.BatchNorm2d(2048)
-        self.bn1 = nn.BatchNorm2d(1024)
-        self.bn2 = nn.BatchNorm2d(512)
+        self.bn0 = nn.BatchNorm2d(512)
+        self.bn1 = nn.BatchNorm2d(256)
+        self.bn2 = nn.BatchNorm2d(128)
         # self.bn3 = nn.BatchNorm2d(256)
         # self.bn4 = nn.BatchNorm2d(128)
         # self.bn5 = nn.BatchNorm2d(64)        
@@ -376,7 +376,7 @@ def testing_model(model, test_loader):
             # Convert non-white pixels to black
             for i in range(w):
                 for j in range(h):
-                    if(r[i, j] < 255 or g[i, j] < 255 or b[i, j] < 255):
+                    if(r[i, j] < 100 or g[i, j] < 100 or b[i, j] < 100):
                         r[i, j] = 0 # Just change R channel
 
             # Merge just the R channel as all channels

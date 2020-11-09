@@ -359,17 +359,13 @@ def testing_model(model, test_loader):
     # plot the first ten input images and then reconstructed images
     fig, axes = plt.subplots(nrows=2, ncols=10, sharex=True, sharey=True, figsize=(25,4))
     # input images on top row, reconstructions on bottom
-    i = 0
+    im_no = 0
     for noisy_imgs, row in zip([noisy_imgs, output], axes):
         for img, ax in zip(noisy_imgs, row):
             img = np.transpose( img, (1, 2, 0))
             im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
             if im.mode != 'RGB':
                 im = im.convert('RGB')
-            bpixel = (0, 0)
-            newcolor = (255,)*3
-            # if not any(im.getpixel(bpixel)) and not any(im.getpixel(newcolor)):
-            #     im.putpixel(bpixel)
             # Separate RGB arrays
             R, G, B = im.convert('RGB').split()
             r = R.load()
@@ -377,16 +373,16 @@ def testing_model(model, test_loader):
             b = B.load()
             w, h = im.size
 
-            # Convert non-black pixels to white
+            # Convert non-white pixels to black
             for i in range(w):
                 for j in range(h):
-                    if(r[i, j] != 0 or g[i, j] != 0 or b[i, j] != 0):
-                        r[i, j] = 255 # Just change R channel
+                    if(r[i, j] < 255 or g[i, j] < 255 or b[i, j] < 255):
+                        r[i, j] = 0 # Just change R channel
 
             # Merge just the R channel as all channels
             im = Image.merge('RGB', (R, R, R))    
-            im.save('outfile'+str(i)+'.png')
-            i = i + 1
+            im.save('outfile'+str(im_no)+'.png')
+            im_no = im_no + 1
             # ax.imshow(np.squeeze(img), cmap='gray')
             ax.imshow(img)
             ax.get_xaxis().set_visible(False)

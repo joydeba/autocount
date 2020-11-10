@@ -366,21 +366,21 @@ def testing_model(model, test_loader):
             im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
             if im.mode != 'RGB':
                 im = im.convert('RGB')
+                
             # Separate RGB arrays
             R, G, B = im.convert('RGB').split()
             r = R.load()
             g = G.load()
             b = B.load()
             w, h = im.size
-
             # Convert non-white pixels to black
             for i in range(w):
                 for j in range(h):
                     if(r[i, j] < 100 or g[i, j] < 100 or b[i, j] < 100):
                         r[i, j] = 0 # Just change R channel
-
             # Merge just the R channel as all channels
-            im = Image.merge('RGB', (R, R, R))    
+            im = Image.merge('RGB', (R, R, R)) 
+
             im.save('outfile'+str(im_no)+'.png')
             im_no = im_no + 1
             # ax.imshow(np.squeeze(img), cmap='gray')

@@ -296,7 +296,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 5
+    n_epochs = 50
 
 
 
@@ -328,11 +328,11 @@ def training_model(model, train_loader):
             # clear the gradients of all optimized variables
             optimizer.zero_grad()
             ## forward pass: compute predicted outputs by passing *noisy* images to the model
-            outputs = model(noisy_imgs)
+            outputs = model(images)
             # outputs = model(noisy_imgs[None, ...])
             # calculate the loss
             # the "target" is still the original, not-noisy images
-            loss = criterion(outputs, images)
+            loss = criterion(outputs, noisy_imgs)
             # backward pass: compute gradient of the loss with respect to model parameters
             loss.backward()
             # perform a single optimization step (parameter update)
@@ -355,9 +355,9 @@ def testing_model(model, test_loader):
     # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
     # noisy_imgs = images
     noisy_imgs = images.clone()
-    for idx, image in enumerate(noisy_imgs):
-        image[image <= 0.39] = 0
-        noisy_imgs[idx] = image  
+    # for idx, image in enumerate(noisy_imgs):
+    #     image[image <= 0.39] = 0
+    #     noisy_imgs[idx] = image  
 
     noisy_imgs = np.clip(noisy_imgs, 0., 1.)
     # get sample outputs

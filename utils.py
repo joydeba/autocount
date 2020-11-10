@@ -314,7 +314,14 @@ def training_model(model, train_loader):
             
             ## add random noise to the input images
             # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-            noisy_imgs = images
+            noisy_imgs = images.clone()
+
+            for idx, image in enumerate(noisy_imgs):
+                image[image <= 0.39] = 0
+                noisy_imgs[idx] = image
+                
+            
+
             # Clip the images to be between 0 and 1
             noisy_imgs = np.clip(noisy_imgs, 0., 1.)
                     
@@ -346,7 +353,12 @@ def testing_model(model, test_loader):
     images, labels = dataiter.next()
     # add noise to the test images
     # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-    noisy_imgs = images
+    # noisy_imgs = images
+    noisy_imgs = images.clone()
+    for idx, image in enumerate(noisy_imgs):
+        image[image <= 0.39] = 0
+        noisy_imgs[idx] = image  
+
     noisy_imgs = np.clip(noisy_imgs, 0., 1.)
     # get sample outputs
     output = model(noisy_imgs)
@@ -367,19 +379,19 @@ def testing_model(model, test_loader):
             if im.mode != 'RGB':
                 im = im.convert('RGB')
                 
-            # Separate RGB arrays
-            R, G, B = im.convert('RGB').split()
-            r = R.load()
-            g = G.load()
-            b = B.load()
-            w, h = im.size
-            # Convert non-white pixels to black
-            for i in range(w):
-                for j in range(h):
-                    if(r[i, j] < 100 or g[i, j] < 100 or b[i, j] < 100):
-                        r[i, j] = 0 # Just change R channel
-            # Merge just the R channel as all channels
-            im = Image.merge('RGB', (R, R, R)) 
+            # # Separate RGB arrays
+            # R, G, B = im.convert('RGB').split()
+            # r = R.load()
+            # g = G.load()
+            # b = B.load()
+            # w, h = im.size
+            # # Convert non-white pixels to black
+            # for i in range(w):
+            #     for j in range(h):
+            #         if(r[i, j] < 100 or g[i, j] < 100 or b[i, j] < 100):
+            #             r[i, j] = 0 # Just change R channel
+            # # Merge just the R channel as all channels
+            # im = Image.merge('RGB', (R, R, R)) 
 
             im.save('outfile'+str(im_no)+'.png')
             im_no = im_no + 1

@@ -432,7 +432,7 @@ def data_loading_for_masking():
     print(len(paths))
     orig = np.array([np.asarray(Image.open(img)) for img in tqdm(paths)])
     orig.shape
-    return orig
+    return orig, paths
 
 def vizualize_images(images, name="Original"):
     plt.figure(figsize=(9,9))
@@ -451,14 +451,14 @@ def vizualize_images(images, name="Original"):
     plt.show()
 
 
-def write_segmented_images(segmented):
+def write_segmented_images(segmented, paths):
     for i, image in tqdm(enumerate(segmented)):
         directory = paths[i].rsplit('/', 3)[0] + '/segmented/' + paths[i].rsplit('/', 2)[1]+ '/'
         os.makedirs(directory, exist_ok = True)
         cv2.imwrite(directory + paths[i].rsplit('/', 2)[2], image)
 
 def segmentation_with_masking():
-    orig = data_loading_for_masking()
+    orig, paths = data_loading_for_masking()
     vizualize_images(orig)
     gray = np.array([cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in tqdm(orig)])
     vizualize_images(gray, "Grayscale")
@@ -480,7 +480,7 @@ def segmentation_with_masking():
 
     vizualize_images(masked, "Mask")
     vizualize_images(segmented, "Segmented")
-    write_segmented_images(segmented)    
+    write_segmented_images(segmented, paths)    
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()

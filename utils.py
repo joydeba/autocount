@@ -317,9 +317,10 @@ def training_model(model, train_loader):
             noisy_imgs = images.clone()
 
             for idx, image in enumerate(noisy_imgs):
-                image[image <= 0.39] = 0
+                # image[image <= 0.39] = 0
+                image = segmentation_with_masking(255*image.permute(1, 2, 0).numpy())  
                 noisy_imgs[idx] = image
-                
+              
             
 
             # Clip the images to be between 0 and 1
@@ -457,7 +458,7 @@ def write_segmented_images(segmented, paths):
         os.makedirs(directory, exist_ok = True)
         cv2.imwrite(directory + paths[i].rsplit('/', 2)[2], image)
 
-def segmentation_with_masking():
+def segmentation_with_masking_all():
     orig, paths = data_loading_for_masking()
     vizualize_images(orig)
     gray = np.array([cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in tqdm(orig)])
@@ -480,11 +481,25 @@ def segmentation_with_masking():
 
     vizualize_images(masked, "Mask")
     vizualize_images(segmented, "Segmented")
-    write_segmented_images(segmented, paths)    
+    write_segmented_images(segmented, paths)
+
+def segmentation_with_masking(img):
+    gray = np.array(cv2.cvtColor(img, cv2.COLOR_RGB2GRAY))
+    thresh = cv2.threshold(gray, np.mean(gray), 255, cv2.THRESH_BINARY_INV)[1]
+    np.mean(gray)
+    edges = cv2.dilate(cv2.Canny(thresh, 0, 255), None)
+
+    cnt = sorted(cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1]
+    # mask = np.zeros((256,256), np.uint8)
+    mask = np.zeros(edges.shape[:2], dtype=np.uint8)
+    masked = cv2.drawContours(mask, [cnt],-1, 255, -1)
+    dst = cv2.bitwise_and(img, img, mask=mask)
+    segmented = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+    return segmented        
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()
 # data_grouping_BSR()
 # show_image_withAnnotation()
-# denoising_autoencoder()
-segmentation_with_masking()
+denoising_autoencoder()
+# segmentation_with_masking_all()

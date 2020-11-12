@@ -255,7 +255,7 @@ class ConvAutoencoder(nn.Module):
 def data_loading():
     # convert data to torch.FloatTensor
     # transform = transforms.ToTensor()
-    transform = transforms.Compose([transforms.Resize([int(320), int(480)]),
+    transform = transforms.Compose([transforms.Resize([int(1024), int(1024)]),
                                 transforms.ToTensor()])
     # load the training and test datasets
     # train_data = datasets.MNIST(root='data', train=True, download=True, transform=transform)
@@ -318,8 +318,8 @@ def training_model(model, train_loader):
 
             for idx, image in enumerate(noisy_imgs):
                 # image[image <= 0.39] = 0
-                image = segmentation_with_masking(255*image.permute(1, 2, 0).numpy())  
-                noisy_imgs[idx] = image
+                image = segmentation_with_masking((255*image).permute(1, 2, 0).numpy())  
+                noisy_imgs[idx] = torch.from_numpy(image).permute(2, 0, 1)
               
             
 
@@ -487,7 +487,7 @@ def segmentation_with_masking(img):
     gray = np.array(cv2.cvtColor(img, cv2.COLOR_RGB2GRAY))
     thresh = cv2.threshold(gray, np.mean(gray), 255, cv2.THRESH_BINARY_INV)[1]
     np.mean(gray)
-    edges = cv2.dilate(cv2.Canny(thresh, 0, 255), None)
+    edges = cv2.dilate(cv2.Canny(thresh.astype(np.uint8), 0, 255), None)
 
     cnt = sorted(cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1]
     # mask = np.zeros((256,256), np.uint8)

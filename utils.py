@@ -425,109 +425,66 @@ from PIL import Image
 import random
 from tqdm.notebook import tqdm
 np.random.seed(1)
-
-paths = glob.glob('dataset/Class1/*.jpg',recursive=True)
-print(len(paths))
-orig = np.array([np.asarray(Image.open(img)) for img in tqdm(paths)])
-orig.shape
-
-plt.figure(figsize=(9,9))
-for i, img in enumerate(orig[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(img) 
-plt.suptitle("Original", fontsize=20)
-plt.show()
-
-gray = np.array([cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in tqdm(orig)])
-gray.shape
-
-plt.figure(figsize=(9,9))
-
-for i, img in enumerate(gray[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(cv2.cvtColor(img, cv2.COLOR_GRAY2RGB))
-
-plt.suptitle("Grayscale", fontsize=20)
-plt.show()
-gray[0]
-
-
-thresh = [cv2.threshold(img, np.mean(img), 255, cv2.THRESH_BINARY_INV)[1] for img in tqdm(gray)]
-np.mean(gray[0])
-thresh[0]
-
-
-plt.figure(figsize=(9,9))
-for i, threshimg in enumerate(thresh[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(threshimg,cmap='gray')
-plt.suptitle("Threshold", fontsize=20)
-plt.show()
-
-edges = [cv2.dilate(cv2.Canny(img, 0, 255), None) for img in tqdm(thresh)]
-
-
-plt.figure(figsize=(9,9))
-for i, edge in enumerate(edges[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(cv2.cvtColor(edge, cv2.COLOR_GRAY2RGB))  
-plt.suptitle("Edges", fontsize=20)
-plt.show()
-
-masked=[]
-segmented=[]
-
-for i, img in tqdm(enumerate(edges)):
-  cnt = sorted(cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1]
-#   mask = np.zeros((256,256), np.uint8)
-  mask = np.zeros(img.shape[:2], dtype=np.uint8)
-  masked.append(cv2.drawContours(mask, [cnt],-1, 255, -1))
-  dst = cv2.bitwise_and(orig[i], orig[i], mask=mask)
-  segmented.append(cv2.cvtColor(dst, cv2.COLOR_BGR2RGB))
-
-
-plt.figure(figsize=(9,9))
-for i, maskimg in enumerate(masked[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(maskimg, cmap='gray')
-plt.suptitle("Mask", fontsize=20)
-plt.show()
-
-plt.figure(figsize=(9,9))
-
-for i, segimg in enumerate(segmented[0:16]):
-  plt.subplot(4,4,i+1)
-  plt.xticks([])
-  plt.yticks([])
-  plt.grid(False)
-  plt.imshow(cv2.cvtColor(segimg, cv2.COLOR_BGR2RGB))
-plt.suptitle("Segmented", fontsize=20)
-plt.show()
-
 import os
-for i, image in tqdm(enumerate(segmented)):
-    directory = paths[i].rsplit('/', 3)[0] + '/segmented/' + paths[i].rsplit('/', 2)[1]+ '/'
-    os.makedirs(directory, exist_ok = True)
-    cv2.imwrite(directory + paths[i].rsplit('/', 2)[2], image)
 
+def data_loading_for_masking():
+    paths = glob.glob('dataset/Class1/*.jpg',recursive=True)
+    print(len(paths))
+    orig = np.array([np.asarray(Image.open(img)) for img in tqdm(paths)])
+    orig.shape
+    return orig
+
+def vizualize_images(images, name="Original"):
+    plt.figure(figsize=(9,9))
+    for i, img in enumerate(images[0:16]):
+        plt.subplot(4,4,i+1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(False)
+        plt.imshow(img)
+        # plt.imshow(cv2.cvtColor(img, cv2.COLOR_GRAY2RGB))
+        # plt.imshow(threshimg,cmap='gray')
+        # plt.imshow(cv2.cvtColor(edge, cv2.COLOR_GRAY2RGB))
+        # plt.imshow(maskimg, cmap='gray')
+        # plt.imshow(cv2.cvtColor(segimg, cv2.COLOR_BGR2RGB))   
+    plt.suptitle(name, fontsize=20)
+    plt.show()
+
+
+def write_segmented_images(segmented):
+    for i, image in tqdm(enumerate(segmented)):
+        directory = paths[i].rsplit('/', 3)[0] + '/segmented/' + paths[i].rsplit('/', 2)[1]+ '/'
+        os.makedirs(directory, exist_ok = True)
+        cv2.imwrite(directory + paths[i].rsplit('/', 2)[2], image)
+
+def segmentation_with_masking():
+    orig = data_loading_for_masking()
+    vizualize_images(orig)
+    gray = np.array([cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) for img in tqdm(orig)])
+    vizualize_images(gray, "Grayscale")
+    thresh = [cv2.threshold(img, np.mean(img), 255, cv2.THRESH_BINARY_INV)[1] for img in tqdm(gray)]
+    np.mean(gray[0])
+    vizualize_images(thresh, "Threshold")
+    edges = [cv2.dilate(cv2.Canny(img, 0, 255), None) for img in tqdm(thresh)]
+    vizualize_images(thresh, "Edges")
+
+    masked=[]
+    segmented=[]
+    for i, img in tqdm(enumerate(edges)):
+        cnt = sorted(cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1]
+        # mask = np.zeros((256,256), np.uint8)
+        mask = np.zeros(img.shape[:2], dtype=np.uint8)
+        masked.append(cv2.drawContours(mask, [cnt],-1, 255, -1))
+        dst = cv2.bitwise_and(orig[i], orig[i], mask=mask)
+        segmented.append(cv2.cvtColor(dst, cv2.COLOR_BGR2RGB))
+
+    vizualize_images(masked, "Mask")
+    vizualize_images(segmented, "Segmented")
+    write_segmented_images(segmented)    
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()
 # data_grouping_BSR()
 # show_image_withAnnotation()
 # denoising_autoencoder()
+segmentation_with_masking()

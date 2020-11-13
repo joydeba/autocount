@@ -296,7 +296,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 50
+    n_epochs = 10
 
 
 
@@ -366,7 +366,7 @@ def testing_model(model, test_loader):
     # prep images for display
     noisy_imgs = noisy_imgs.numpy()
     # output is resized into a batch of iages
-    output = output.view(batch_size, 3, 320, 480)
+    output = output.view(batch_size, 3, 1024, 1024)
     # use detach when it's an output that requires_grad
     output = output.detach().numpy()
     # plot the first ten input images and then reconstructed images

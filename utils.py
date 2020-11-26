@@ -501,5 +501,10 @@ def segmentation_with_masking(img):
 # data_grouping_GWHD()
 # data_grouping_BSR()
 # show_image_withAnnotation()
-denoising_autoencoder()
+# denoising_autoencoder()
 # segmentation_with_masking_all()
+
+def semantic_segmentation():
+    pass
+
+semantic_segmentation()

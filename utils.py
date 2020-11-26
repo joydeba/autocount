@@ -504,7 +504,287 @@ def segmentation_with_masking(img):
 # denoising_autoencoder()
 # segmentation_with_masking_all()
 
-def semantic_segmentation():
-    pass
+from ochumanApi.ochuman import OCHuman
+import cv2, os
+import matplotlib
+import matplotlib.pyplot as plt
+# %matplotlib inline
+plt.rcParams['figure.figsize'] = (15, 15)
+import ochumanApi.vis as vistool
+from ochumanApi.ochuman import Poly2Mask
+import cv2
+# from google.colab.patches import cv2_imshow
+from tqdm.notebook import tqdm
+import numpy as np
 
-semantic_segmentation()
+
+def get_segmentation(data):
+    img = cv2.imread(os.path.join(ImgDir, data['file_name']))
+    height, width = data['height'], data['width']
+
+    colors = [[255, 0, 0], 
+            [255, 255, 0],
+            [0, 255, 0],
+            [0, 255, 255], 
+            [0, 0, 255], 
+            [255, 0, 255]]
+
+
+    for i, anno in enumerate(data['annotations']):
+        bbox = anno['bbox']
+        kpt = anno['keypoints']
+        segm = anno['segms']
+        max_iou = anno['max_iou']
+
+        # img = vistool.draw_bbox(img, bbox, thickness=3, color=colors[i%len(colors)])
+        if segm is not None:
+            mask = Poly2Mask(segm)
+            img = vistool.draw_mask(img, mask, thickness=3, color=colors[i%len(colors)])
+        # if kpt is not None:
+        #     img = vistool.draw_skeleton(img, kpt, connection=None, colors=colors[i%len(colors)], bbox=bbox)
+    return img
+
+def mask_creation():    
+    ochuman = OCHuman(AnnoFile='ochuman.json', Filter='segm')
+    image_ids = ochuman.getImgIds()
+    print ('Total images: %d'%len(image_ids))
+    return ochuman, image_ids
+
+def black_white_mask_creation(real_img, m_img):
+    real_img = real_img.reshape(1, -1)[0]
+    m_img = m_img.reshape(1, -1)[0]
+
+    new = []
+
+    for i, j in zip(real_img, m_img):
+        if i != j:
+            new.append(255) # human will white appear because of 255
+        else:
+            new.append(0) # background will black appear because of 0, set i instead of 0 to do not change backgraound
+
+    new_np = np.array(new)
+    new_np = new_np.reshape(512, 512, 3)
+
+    return new_np    
+
+def color_mask_creation(real_img, m_img):
+    blue_channel_r = real_img[:,:,0]
+    green_channel_r = real_img[:,:,1]
+    red_channel_r = real_img[:,:,2]
+    
+    blue_channel_m = m_img[:,:,0]
+    green_channel_m = m_img[:,:,1]
+    red_channel_m = m_img[:,:,2]
+    
+    new_b = []
+    new_g = []
+    new_r = []
+
+    mks_img_new = np.zeros([512, 512, 3])
+    
+    for i in range(3):
+        # print("i: ", i)
+        if i == 0:
+            img = blue_channel_r
+            msk = blue_channel_m
+        if i == 1:
+            img = green_channel_r
+            msk = green_channel_m
+        if i == 2:
+            img = red_channel_r
+            msk = red_channel_m
+
+
+        img = img.reshape(1, -1)[0]
+        msk = msk.reshape(1, -1)[0]
+
+        # print(f"Img: {img.shape}, Msk: {msk.shape}")
+
+        if i == 0:
+            new = new_b
+        if i == 1:
+            new = new_g
+        if i == 2:
+            new = new_r
+
+        for k, j in zip(img, msk):
+            if k != j:
+                if i == 0:
+                    new.append(50) # blue
+                if i == 1:
+                    new.append(235) # green
+                if i == 2:
+                    new.append(235) # red
+            else:
+                if i == 0:
+                    new.append(120) # blue
+                if i == 1:
+                    new.append(0) # green
+                if i == 2:
+                    new.append(120) # red
+    
+    new_b = np.array(new_b).reshape(512, 512)
+    new_g = np.array(new_g).reshape(512, 512)
+    new_r = np.array(new_r).reshape(512, 512)
+
+    mks_img_new[:,:,0] = new_b
+    mks_img_new[:,:,1] = new_g
+    mks_img_new[:,:,2] = new_r
+
+    # print(mks_img_new.shape)      
+
+    # print("Shape BGR: ", new_b.shape, new_g.shape, new_r.shape)  
+
+    return mks_img_new    
+
+
+def generator_images(batch_size, ind):
+    while True:
+        x_batch = []
+        y_batch = []
+
+        for i in range(batch_size):
+            data = ochuman.loadImgs(imgIds=[image_ids[ind]])[0]
+
+            file_name = data['file_name']
+
+            img = cv2.imread(ImgDir+'/'+file_name)
+        
+            y = get_segmentation(data)
+
+            img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
+            y = cv2.resize(y, (IMG_WIDTH, IMG_HEIGHT))
+           
+            
+            new = black_white_mask_creation(img, y)
+
+            img = img / 255.
+            y = new / 255.
+            
+            x_batch.append(img)
+            y_batch.append(y)
+
+        
+        x_batch = np.array(x_batch)
+      
+        y_batch = {'seg': np.array(y_batch)
+                    }
+
+        yield x_batch, y_batch
+
+
+
+def masking_all():
+    for i in tqdm(range(4731)):
+        for x, y in generator_images(1, i):
+            break
+
+        base_dir_custom = "custom_dataset_human_black_background/"
+        try:
+            os.makedirs(f'{base_dir_custom}')
+        except:
+            pass
+        try:
+            os.makedirs(f'{base_dir_custom}features/')
+        except:
+            pass
+        try:
+            os.makedirs(f'{base_dir_custom}labels/')
+        except:
+            pass
+            
+        x_name = f"{base_dir_custom}features/{i}_x.jpg"
+        y_name = f"{base_dir_custom}labels/{i}_y.jpg"
+        cv2.imwrite(x_name, x[0] * 255.)
+        cv2.imwrite(y_name, y['seg'][0] * 255.)    
+
+
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Activation, Lambda, GlobalAveragePooling2D, concatenate
+from tensorflow.keras.layers import UpSampling2D, Conv2D, Dropout, MaxPooling2D, Conv2DTranspose
+from tensorflow.keras.layers import Dense, Flatten, Input
+from tensorflow.keras.models import Model, Sequential, load_model
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+
+# from tensorflow.keras.applications.vgg16 import VGG16
+# from keras.applications.vgg16 import VGG16
+# from tensorflow.keras.applications.inception_v3 import InceptionV3
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import cv2
+import pickle
+import random
+from sklearn.model_selection import train_test_split
+
+# from google.colab.patches import cv2_imshow
+
+def get_model():
+    in1 = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3 ))
+
+    conv1 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(in1)
+    conv1 = Dropout(0.2)(conv1)
+    conv1 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv1)
+    pool1 = MaxPooling2D((2, 2))(conv1)
+
+    conv2 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(pool1)
+    conv2 = Dropout(0.2)(conv2)
+    conv2 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv2)
+    pool2 = MaxPooling2D((2, 2))(conv2)
+
+    conv3 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(pool2)
+    conv3 = Dropout(0.2)(conv3)
+    conv3 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv3)
+    pool3 = MaxPooling2D((2, 2))(conv3)
+
+    conv4 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(pool3)
+    conv4 = Dropout(0.2)(conv4)
+    conv4 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv4)
+
+    up1 = concatenate([UpSampling2D((2, 2))(conv4), conv3], axis=-1)
+    conv5 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(up1)
+    conv5 = Dropout(0.2)(conv5)
+    conv5 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv5)
+    
+    up2 = concatenate([UpSampling2D((2, 2))(conv5), conv2], axis=-1)
+    conv6 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(up2)
+    conv6 = Dropout(0.2)(conv6)
+    conv6 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv6)
+
+    up2 = concatenate([UpSampling2D((2, 2))(conv6), conv1], axis=-1)
+    conv7 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(up2)
+    conv7 = Dropout(0.2)(conv7)
+    conv7 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(conv7)
+    segmentation = Conv2D(3, (1, 1), activation='sigmoid', name='seg')(conv7)
+
+    model = Model(inputs=[in1], outputs=[segmentation])
+
+    losses = {'seg': 'binary_crossentropy'
+            }
+
+    metrics = {'seg': ['acc']
+                }
+    model.compile(optimizer="adam", loss = losses, metrics=metrics)
+
+    return model
+
+
+ochuman, image_ids = mask_creation()
+# black_white_mask_creation()
+# color_mask_creation()
+
+IMG_HEIGHT = 512
+IMG_WIDTH = 512
+ImgDir = 'images/'
+
+for x, y in generator_images(2, 1):
+    break
+
+print(x.shape, y['seg'].shape)
+
+masking_all()
+
+# semantic_segmentation()
+

@@ -718,6 +718,7 @@ import cv2
 import pickle
 import random
 from sklearn.model_selection import train_test_split
+import datetime
 
 # from google.colab.patches import cv2_imshow
 
@@ -770,6 +771,82 @@ def get_model():
 
     return model
 
+class MyCustomCallback(tf.keras.callbacks.Callback):
+    def on_train_begin(self, epoch, logs={}):
+
+        res_dir = "intermediate_results_purple_background"
+
+        try:
+            os.makedirs(res_dir)
+        except:
+            print(f"{res_dir} directory already exist")
+
+        print('Training: epoch {} begins at {}'.format(epoch, datetime.datetime.now().time()))
+
+    def on_epoch_end(self, epoch, logs=None):
+        res_dir = "intermediate_results_purple_background/"
+        print('Training: epoch {} ends at {}'.format(epoch, datetime.datetime.now().time()))
+        
+        for x_test, y_test in keras_generator_train_val_test(batch_size, choice="test"):
+            break
+        p = np.reshape(x_test[0], (1, 512, 512, 3))
+        prediction = self.model.predict(p)
+
+        x_img = f"{res_dir}{epoch}_X_input.jpg"
+        y_img = f"{res_dir}{epoch}_Y_truth.jpg"
+        predicted_img = f"{res_dir}{epoch}_Y_predicted.jpg"
+
+        cv2.imwrite(x_img, x_test[0] * 255.)
+        cv2.imwrite(y_img, y_test['seg'][0] * 255.)
+        cv2.imwrite(predicted_img, prediction[0] * 255.)
+
+def keras_generator_train_val_test(batch_size, choice="train"):
+
+    if choice == "train":
+        X = X_train
+        y = y_train
+    elif choice == "val":
+        X = X_val
+        y = y_val
+    elif choice == "test":
+        X = X_test
+        y = y_test
+    else:
+        print("Invalid Option")
+        return False
+        
+    while True:
+        x_batch = []
+        y_batch = []
+
+        for i in range(batch_size):
+            x_rand = random.choice(X)
+            y_rand = x_rand[:-5]+"y.jpg"
+            
+            x_path = f"{ImgDir}features/{x_rand}"
+            y_path = f"{ImgDir}labels/{y_rand}"
+
+            x = cv2.imread(x_path)
+            y = cv2.imread(y_path)
+
+            x = x / 255.
+            y = y / 255.
+            
+            x_batch.append(x)
+            y_batch.append(y)
+
+        
+        x_batch = np.array(x_batch)
+        # y_batch = np.array(y_batch)
+
+        y_batch = {'seg': np.array(y_batch),
+                #    'cls': np.array(classification_list)
+                }
+
+        yield x_batch, y_batch
+
+
+
 
 ochuman, image_ids = mask_creation()
 # black_white_mask_creation()
@@ -777,14 +854,62 @@ ochuman, image_ids = mask_creation()
 
 IMG_HEIGHT = 512
 IMG_WIDTH = 512
-ImgDir = 'images/'
+epochs = 50
+batch_size = 16
+ImgDir = "custom_dataset_human_black_background/"
 
-for x, y in generator_images(2, 1):
+features = os.listdir(f"{ImgDir}features/")
+labels = os.listdir(f"{ImgDir}labels/")
+print(len(features), len(labels))
+
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
+
+X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.15, random_state=1)
+
+print(len(X_train), len(X_val), len(X_test))
+
+for x, y in keras_generator_train_val_test(2, choice="train"):
     break
 
 print(x.shape, y['seg'].shape)
+# cv2_imshow(x[0] * 255.)
+# cv2_imshow(y['seg'][0] * 255.)
 
-masking_all()
+model = get_model()
+model.summary()
 
+# Training 
+model_name = "models/"+"Unet_purple_background.h5"
+
+modelcheckpoint = ModelCheckpoint(model_name,
+                                  monitor='val_loss',
+                                  mode='auto',
+                                  verbose=1,
+                                  save_best_only=True)
+
+lr_callback = ReduceLROnPlateau(min_lr=0.000001)
+
+callback_list = [modelcheckpoint, lr_callback, MyCustomCallback()]
+
+history = model.fit_generator(
+    keras_generator_train_val_test(batch_size, choice="train"),
+    validation_data = keras_generator_train_val_test(batch_size, choice="val"),
+    validation_steps = 100,
+    steps_per_epoch=100,
+    epochs=epochs,
+    verbose=1, 
+    shuffle=True,
+    callbacks = callback_list,
+)
+
+
+
+
+
+# Data Preparation, espacially masking
+# for x, y in generator_images(2, 1):
+#     break
+# print(x.shape, y['seg'].shape)
+# masking_all()
 # semantic_segmentation()
 

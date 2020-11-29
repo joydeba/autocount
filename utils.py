@@ -853,7 +853,7 @@ def training_unet():
     model.summary()
 
     # Training 
-    model_name = "models/"+"Unet_purple_background.h5"
+    model_name = "models/"+"Unet_black_background.h5"
 
     modelcheckpoint = ModelCheckpoint(model_name,
                                     monitor='val_loss',

@@ -630,11 +630,8 @@ def color_mask_creation(real_img, m_img):
     mks_img_new[:,:,0] = new_b
     mks_img_new[:,:,1] = new_g
     mks_img_new[:,:,2] = new_r
-
     # print(mks_img_new.shape)      
-
     # print("Shape BGR: ", new_b.shape, new_g.shape, new_r.shape)  
-
     return mks_img_new    
 
 
@@ -642,43 +639,27 @@ def generator_images(batch_size, ind):
     while True:
         x_batch = []
         y_batch = []
-
         for i in range(batch_size):
             data = ochuman.loadImgs(imgIds=[image_ids[ind]])[0]
-
             file_name = data['file_name']
-
             img = cv2.imread(ImgDir+'/'+file_name)
-        
             y = get_segmentation(data)
-
             img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
             y = cv2.resize(y, (IMG_WIDTH, IMG_HEIGHT))
-           
-            
             new = black_white_mask_creation(img, y)
-
             img = img / 255.
             y = new / 255.
-            
             x_batch.append(img)
             y_batch.append(y)
-
-        
         x_batch = np.array(x_batch)
-      
         y_batch = {'seg': np.array(y_batch)
                     }
-
         yield x_batch, y_batch
-
-
 
 def masking_all():
     for i in tqdm(range(4731)):
         for x, y in generator_images(1, i):
             break
-
         base_dir_custom = "custom_dataset_human_black_background/"
         try:
             os.makedirs(f'{base_dir_custom}')
@@ -692,11 +673,16 @@ def masking_all():
             os.makedirs(f'{base_dir_custom}labels/')
         except:
             pass
-            
         x_name = f"{base_dir_custom}features/{i}_x.jpg"
         y_name = f"{base_dir_custom}labels/{i}_y.jpg"
         cv2.imwrite(x_name, x[0] * 255.)
         cv2.imwrite(y_name, y['seg'][0] * 255.)    
+
+# Data Preparation, espacially masking
+# for x, y in generator_images(2, 1):
+#     break
+# print(x.shape, y['seg'].shape)
+# masking_all()
 
 
 import tensorflow as tf
@@ -706,11 +692,9 @@ from tensorflow.keras.layers import UpSampling2D, Conv2D, Dropout, MaxPooling2D,
 from tensorflow.keras.layers import Dense, Flatten, Input
 from tensorflow.keras.models import Model, Sequential, load_model
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-
 # from tensorflow.keras.applications.vgg16 import VGG16
 # from keras.applications.vgg16 import VGG16
 # from tensorflow.keras.applications.inception_v3 import InceptionV3
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -719,7 +703,6 @@ import pickle
 import random
 from sklearn.model_selection import train_test_split
 import datetime
-
 # from google.colab.patches import cv2_imshow
 
 def get_model():
@@ -774,7 +757,7 @@ def get_model():
 class MyCustomCallback(tf.keras.callbacks.Callback):
     def on_train_begin(self, epoch, logs={}):
 
-        res_dir = "intermediate_results_purple_background"
+        res_dir = "intermediate_results_black_background"
 
         try:
             os.makedirs(res_dir)
@@ -784,7 +767,7 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         print('Training: epoch {} begins at {}'.format(epoch, datetime.datetime.now().time()))
 
     def on_epoch_end(self, epoch, logs=None):
-        res_dir = "intermediate_results_purple_background/"
+        res_dir = "intermediate_results_black_background/"
         print('Training: epoch {} ends at {}'.format(epoch, datetime.datetime.now().time()))
         
         for x_test, y_test in keras_generator_train_val_test(batch_size, choice="test"):
@@ -846,57 +829,43 @@ def keras_generator_train_val_test(batch_size, choice="train"):
         yield x_batch, y_batch
 
 
+def training_unet():
+    IMG_HEIGHT = 512
+    IMG_WIDTH = 512
+    epochs = 5
+    batch_size = 16
+    ImgDir = "custom_dataset_human_black_background/"
 
+    features = os.listdir(f"{ImgDir}features/")
+    labels = os.listdir(f"{ImgDir}labels/")
+    print(len(features), len(labels))
 
-ochuman, image_ids = mask_creation()
-# black_white_mask_creation()
-# color_mask_creation()
+    X = features
+    y = labels
 
-IMG_HEIGHT = 512
-IMG_WIDTH = 512
-epochs = 50
-batch_size = 16
-ImgDir = "custom_dataset_human_black_background/"
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
 
-features = os.listdir(f"{ImgDir}features/")
-labels = os.listdir(f"{ImgDir}labels/")
-print(len(features), len(labels))
+    X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.15, random_state=1)
 
+    print(len(X_train), len(X_val), len(X_test))
 
+    model = get_model()
+    model.summary()
 
-X = features
-y = labels
+    # Training 
+    model_name = "models/"+"Unet_purple_background.h5"
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
+    modelcheckpoint = ModelCheckpoint(model_name,
+                                    monitor='val_loss',
+                                    mode='auto',
+                                    verbose=1,
+                                    save_best_only=True)
 
-X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.15, random_state=1)
+    lr_callback = ReduceLROnPlateau(min_lr=0.000001)
 
-print(len(X_train), len(X_val), len(X_test))
+    callback_list = [modelcheckpoint, lr_callback, MyCustomCallback()]
 
-for x, y in keras_generator_train_val_test(2, choice="train"):
-    break
-
-print(x.shape, y['seg'].shape)
-# cv2_imshow(x[0] * 255.)
-# cv2_imshow(y['seg'][0] * 255.)
-
-model = get_model()
-model.summary()
-
-# Training 
-model_name = "models/"+"Unet_purple_background.h5"
-
-modelcheckpoint = ModelCheckpoint(model_name,
-                                  monitor='val_loss',
-                                  mode='auto',
-                                  verbose=1,
-                                  save_best_only=True)
-
-lr_callback = ReduceLROnPlateau(min_lr=0.000001)
-
-callback_list = [modelcheckpoint, lr_callback, MyCustomCallback()]
-
-history = model.fit_generator(
+    history = model.fit_generator(
     keras_generator_train_val_test(batch_size, choice="train"),
     validation_data = keras_generator_train_val_test(batch_size, choice="val"),
     validation_steps = 100,
@@ -905,16 +874,15 @@ history = model.fit_generator(
     verbose=1, 
     shuffle=True,
     callbacks = callback_list,
-)
+    )
 
 
 
-
-
-# Data Preparation, espacially masking
-# for x, y in generator_images(2, 1):
+# for x, y in keras_generator_train_val_test(2, choice="train"):
 #     break
 # print(x.shape, y['seg'].shape)
-# masking_all()
-# semantic_segmentation()
+# # cv2_imshow(x[0] * 255.)
+# # cv2_imshow(y['seg'][0] * 255.)
+training_unet()
+
 

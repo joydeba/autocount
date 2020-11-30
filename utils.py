@@ -544,6 +544,32 @@ def get_segmentation(data):
         #     img = vistool.draw_skeleton(img, kpt, connection=None, colors=colors[i%len(colors)], bbox=bbox)
     return img
 
+def get_segmentation_GWHD(data):
+    img = cv2.imread(os.path.join(ImgDir, data['file_name']))
+    height, width = data['height'], data['width']
+
+    colors = [[255, 0, 0], 
+            [255, 255, 0],
+            [0, 255, 0],
+            [0, 255, 255], 
+            [0, 0, 255], 
+            [255, 0, 255]]
+
+
+    for i, anno in enumerate(data['annotations']):
+        bbox = anno['bbox']
+        kpt = anno['keypoints']
+        segm = anno['segms']
+        max_iou = anno['max_iou']
+
+        # img = vistool.draw_bbox(img, bbox, thickness=3, color=colors[i%len(colors)])
+        if segm is not None:
+            mask = Poly2Mask(segm)
+            img = vistool.draw_mask(img, mask, thickness=3, color=colors[i%len(colors)])
+        # if kpt is not None:
+        #     img = vistool.draw_skeleton(img, kpt, connection=None, colors=colors[i%len(colors)], bbox=bbox)
+    return img    
+
 def mask_creation():    
     ochuman = OCHuman(AnnoFile='ochuman.json', Filter='segm')
     image_ids = ochuman.getImgIds()
@@ -684,8 +710,9 @@ def masking_all(ochuman):
 # for x, y in generator_images(2, 1):
 #     break
 # print(x.shape, y['seg'].shape)
-ochuman, image_ids = mask_creation()
-masking_all(ochuman)
+
+# ochuman, image_ids = mask_creation()
+# masking_all(ochuman)
 
 
 import tensorflow as tf
@@ -709,6 +736,8 @@ import datetime
 # from google.colab.patches import cv2_imshow
 
 def get_model():
+    IMG_HEIGHT = 512
+    IMG_WIDTH = 512
     in1 = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3 ))
 
     conv1 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(in1)
@@ -786,7 +815,7 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         cv2.imwrite(y_img, y_test['seg'][0] * 255.)
         cv2.imwrite(predicted_img, prediction[0] * 255.)
 
-def keras_generator_train_val_test(batch_size, choice="train"):
+def keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"):
 
     if choice == "train":
         X = X_train
@@ -833,10 +862,8 @@ def keras_generator_train_val_test(batch_size, choice="train"):
 
 
 def training_unet():
-    IMG_HEIGHT = 512
-    IMG_WIDTH = 512
     epochs = 5
-    batch_size = 16
+    batch_size = 3
     ImgDir = "custom_dataset_human_black_background/"
 
     features = os.listdir(f"{ImgDir}features/")
@@ -869,8 +896,8 @@ def training_unet():
     callback_list = [modelcheckpoint, lr_callback, MyCustomCallback()]
 
     history = model.fit_generator(
-    keras_generator_train_val_test(batch_size, choice="train"),
-    validation_data = keras_generator_train_val_test(batch_size, choice="val"),
+    keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"),
+    validation_data = keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="val"),
     validation_steps = 100,
     steps_per_epoch=100,
     epochs=epochs,
@@ -889,6 +916,6 @@ def training_unet():
 # # cv2_imshow(y['seg'][0] * 255.)
 
 # Training 
-# training_unet()
+training_unet()
 
 

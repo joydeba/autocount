@@ -516,7 +516,7 @@ import cv2
 # from google.colab.patches import cv2_imshow
 from tqdm.notebook import tqdm
 import numpy as np
-
+ImgDir = 'images'
 
 def get_segmentation(data):
     img = cv2.imread(os.path.join(ImgDir, data['file_name']))
@@ -567,7 +567,7 @@ def black_white_mask_creation(real_img, m_img):
 
     return new_np    
 
-def color_mask_creation(real_img, m_img):
+# def color_mask_creation(real_img, m_img):
     blue_channel_r = real_img[:,:,0]
     green_channel_r = real_img[:,:,1]
     red_channel_r = real_img[:,:,2]
@@ -635,12 +635,14 @@ def color_mask_creation(real_img, m_img):
     return mks_img_new    
 
 
-def generator_images(batch_size, ind):
+def generator_images(batch_size, ind, ochuman):
+    IMG_HEIGHT = 512
+    IMG_WIDTH = 512
     while True:
         x_batch = []
         y_batch = []
         for i in range(batch_size):
-            data = ochuman.loadImgs(imgIds=[image_ids[ind]])[0]
+            data = ochuman.loadImgs(imgIds=['0000'+str(ind)])[0]
             file_name = data['file_name']
             img = cv2.imread(ImgDir+'/'+file_name)
             y = get_segmentation(data)
@@ -656,9 +658,9 @@ def generator_images(batch_size, ind):
                     }
         yield x_batch, y_batch
 
-def masking_all():
-    for i in tqdm(range(4731)):
-        for x, y in generator_images(1, i):
+def masking_all(ochuman):
+    for i in [13,14,15,16,17,18,19,20]:
+        for x, y in generator_images(1, i, ochuman):
             break
         base_dir_custom = "custom_dataset_human_black_background/"
         try:
@@ -682,7 +684,8 @@ def masking_all():
 # for x, y in generator_images(2, 1):
 #     break
 # print(x.shape, y['seg'].shape)
-# masking_all()
+ochuman, image_ids = mask_creation()
+masking_all(ochuman)
 
 
 import tensorflow as tf
@@ -878,11 +881,14 @@ def training_unet():
 
 
 
+# Test
 # for x, y in keras_generator_train_val_test(2, choice="train"):
 #     break
 # print(x.shape, y['seg'].shape)
 # # cv2_imshow(x[0] * 255.)
 # # cv2_imshow(y['seg'][0] * 255.)
-training_unet()
+
+# Training 
+# training_unet()
 
 

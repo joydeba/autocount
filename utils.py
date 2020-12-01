@@ -816,7 +816,7 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         cv2.imwrite(predicted_img, prediction[0] * 255.)
 
 def keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"):
-
+    ImgDir = 'custom_dataset_human_black_background/'
     if choice == "train":
         X = X_train
         y = y_train
@@ -862,8 +862,13 @@ def keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_tes
 
 
 def training_unet():
+
+    # physical_devices = tf.config.list_physical_devices('GPU')
+    # for p in physical_devices:
+    #     tf.config.experimental.set_memory_growth(p, True)  
+
     epochs = 5
-    batch_size = 3
+    batch_size = 2
     ImgDir = "custom_dataset_human_black_background/"
 
     features = os.listdir(f"{ImgDir}features/")
@@ -898,8 +903,8 @@ def training_unet():
     history = model.fit_generator(
     keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"),
     validation_data = keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="val"),
-    validation_steps = 100,
-    steps_per_epoch=100,
+    validation_steps = 1,
+    steps_per_epoch=1,
     epochs=epochs,
     verbose=1, 
     shuffle=True,
@@ -917,5 +922,3 @@ def training_unet():
 
 # Training 
 training_unet()
-
-

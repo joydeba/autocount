@@ -685,24 +685,24 @@ def generator_images(batch_size, ind, ochuman):
         yield x_batch, y_batch
 
 def masking_all(ochuman):
-    for i in [13,14,15,16,17,18,19,20]:
+    for i in [13,14,15,16,17,18,19,20,21,22]:
         for x, y in generator_images(1, i, ochuman):
             break
         base_dir_custom = "custom_dataset_human_black_background/"
         try:
-            os.makedirs('{base_dir_custom}')
+            os.makedirs(f'{base_dir_custom}')
         except:
             pass
         try:
-            os.makedirs('{base_dir_custom}features/')
+            os.makedirs(f'{base_dir_custom}features/')
         except:
             pass
         try:
-            os.makedirs('{base_dir_custom}labels/')
+            os.makedirs(f'{base_dir_custom}labels/')
         except:
             pass
-        x_name = "{base_dir_custom}features/{i}_x.jpg"
-        y_name = "{base_dir_custom}labels/{i}_y.jpg"
+        x_name = f"{base_dir_custom}features/{i}_x.jpg"
+        y_name = f"{base_dir_custom}labels/{i}_y.jpg"
         cv2.imwrite(x_name, x[0] * 255.)
         cv2.imwrite(y_name, y['seg'][0] * 255.)    
 

@@ -824,9 +824,9 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         p = np.reshape(x_test[0], (1, 512, 512, 3))
         prediction = self.model.predict(p)
 
-        x_img = "{res_dir}{epoch}_X_input.jpg"
-        y_img = "{res_dir}{epoch}_Y_truth.jpg"
-        predicted_img = "{res_dir}{epoch}_Y_predicted.jpg"
+        x_img = f"{res_dir}{epoch}_X_input.jpg"
+        y_img = f"{res_dir}{epoch}_Y_truth.jpg"
+        predicted_img = f"{res_dir}{epoch}_Y_predicted.jpg"
 
         cv2.imwrite(x_img, x_test[0] * 255.)
         cv2.imwrite(y_img, y_test['seg'][0] * 255.)

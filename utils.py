@@ -516,7 +516,7 @@ import cv2
 # from google.colab.patches import cv2_imshow
 from tqdm.notebook import tqdm
 import numpy as np
-ImgDir = 'images'
+ImgDir = 'images/'
 
 def get_segmentation(data):
     img = cv2.imread(os.path.join(ImgDir, data['file_name']))
@@ -690,19 +690,19 @@ def masking_all(ochuman):
             break
         base_dir_custom = "custom_dataset_human_black_background/"
         try:
-            os.makedirs(f'{base_dir_custom}')
+            os.makedirs('{base_dir_custom}')
         except:
             pass
         try:
-            os.makedirs(f'{base_dir_custom}features/')
+            os.makedirs('{base_dir_custom}features/')
         except:
             pass
         try:
-            os.makedirs(f'{base_dir_custom}labels/')
+            os.makedirs('{base_dir_custom}labels/')
         except:
             pass
-        x_name = f"{base_dir_custom}features/{i}_x.jpg"
-        y_name = f"{base_dir_custom}labels/{i}_y.jpg"
+        x_name = "{base_dir_custom}features/{i}_x.jpg"
+        y_name = "{base_dir_custom}labels/{i}_y.jpg"
         cv2.imwrite(x_name, x[0] * 255.)
         cv2.imwrite(y_name, y['seg'][0] * 255.)    
 
@@ -734,6 +734,23 @@ import random
 from sklearn.model_selection import train_test_split
 import datetime
 # from google.colab.patches import cv2_imshow
+
+epochs = 5
+batch_size = 2
+ImgDir = "custom_dataset_human_black_background/"
+
+features = os.listdir(f"{ImgDir}features/")
+labels = os.listdir(f"{ImgDir}labels/")
+print(len(features), len(labels))
+
+X = features
+y = labels
+
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
+
+X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.15, random_state=1)
+
+print(len(X_train), len(X_val), len(X_test))
 
 def get_model():
     IMG_HEIGHT = 512
@@ -794,7 +811,7 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         try:
             os.makedirs(res_dir)
         except:
-            print(f"{res_dir} directory already exist")
+            print("{res_dir} directory already exist")
 
         print('Training: epoch {} begins at {}'.format(epoch, datetime.datetime.now().time()))
 
@@ -807,15 +824,15 @@ class MyCustomCallback(tf.keras.callbacks.Callback):
         p = np.reshape(x_test[0], (1, 512, 512, 3))
         prediction = self.model.predict(p)
 
-        x_img = f"{res_dir}{epoch}_X_input.jpg"
-        y_img = f"{res_dir}{epoch}_Y_truth.jpg"
-        predicted_img = f"{res_dir}{epoch}_Y_predicted.jpg"
+        x_img = "{res_dir}{epoch}_X_input.jpg"
+        y_img = "{res_dir}{epoch}_Y_truth.jpg"
+        predicted_img = "{res_dir}{epoch}_Y_predicted.jpg"
 
         cv2.imwrite(x_img, x_test[0] * 255.)
         cv2.imwrite(y_img, y_test['seg'][0] * 255.)
         cv2.imwrite(predicted_img, prediction[0] * 255.)
 
-def keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"):
+def keras_generator_train_val_test(batch_size, choice="train"):
     ImgDir = 'custom_dataset_human_black_background/'
     if choice == "train":
         X = X_train
@@ -857,7 +874,6 @@ def keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_tes
         y_batch = {'seg': np.array(y_batch),
                 #    'cls': np.array(classification_list)
                 }
-
         yield x_batch, y_batch
 
 
@@ -866,23 +882,6 @@ def training_unet():
     # physical_devices = tf.config.list_physical_devices('GPU')
     # for p in physical_devices:
     #     tf.config.experimental.set_memory_growth(p, True)  
-
-    epochs = 5
-    batch_size = 2
-    ImgDir = "custom_dataset_human_black_background/"
-
-    features = os.listdir(f"{ImgDir}features/")
-    labels = os.listdir(f"{ImgDir}labels/")
-    print(len(features), len(labels))
-
-    X = features
-    y = labels
-
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
-
-    X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, test_size=0.15, random_state=1)
-
-    print(len(X_train), len(X_val), len(X_test))
 
     model = get_model()
     model.summary()
@@ -901,8 +900,8 @@ def training_unet():
     callback_list = [modelcheckpoint, lr_callback, MyCustomCallback()]
 
     history = model.fit_generator(
-    keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="train"),
-    validation_data = keras_generator_train_val_test(X_train, X_val, y_train, y_val, X_test, y_test, batch_size, choice="val"),
+    keras_generator_train_val_test(batch_size, choice="train"),
+    validation_data = keras_generator_train_val_test(batch_size, choice="val"),
     validation_steps = 1,
     steps_per_epoch=1,
     epochs=epochs,

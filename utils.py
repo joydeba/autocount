@@ -501,7 +501,7 @@ def segmentation_with_masking(img):
 # data_grouping_GWHD()
 # data_grouping_BSR()
 # show_image_withAnnotation()
-# denoising_autoencoder()
+denoising_autoencoder()
 # segmentation_with_masking_all()
 
 from ochumanApi.ochuman import OCHuman
@@ -920,4 +920,4 @@ def training_unet():
 # # cv2_imshow(y['seg'][0] * 255.)
 
 # Training 
-training_unet()
+# training_unet()

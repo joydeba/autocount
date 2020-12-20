@@ -9,6 +9,8 @@ import ast
 # from PIL import Image
 import os
 import numpy as np
+from torch.utils.data import DataLoader
+from datasetIMG import DataLoaderInstanceSegmentation
 
 def data_grouping_GWHD():
     result = {}
@@ -259,16 +261,24 @@ def data_loading():
                                 transforms.ToTensor()])
     # load the training and test datasets
     # train_data = datasets.MNIST(root='data', train=True, download=True, transform=transform)
-    train_data = datasets.ImageFolder( root="dataset", transform=transform)
-    # test_data = datasets.MNIST(root='data', train=False, download=True, transform=transform)
-    test_data = datasets.ImageFolder( root="dataset", transform=transform)
-    # Create training and test dataloaders
-    num_workers = 0
-    # how many samples per batch to load
+    # train_data = datasets.ImageFolder( root="dataset", transform=transform)
+    # # test_data = datasets.MNIST(root='data', train=False, download=True, transform=transform)
+    # test_data = datasets.ImageFolder( root="dataset", transform=transform)
+    # # Create training and test dataloaders
+    # num_workers = 0
+    # # how many samples per batch to load
     
-    # prepare data loaders
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)     
+    # # prepare data loaders
+    # train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
+    # test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers) 
+
+    train_dataset = DataLoaderInstanceSegmentation()
+    test_dataset = DataLoaderInstanceSegmentation(train = False)
+    train_loader = DataLoader(train_dataset, batch_size=4,
+                            shuffle=False, num_workers=0, pin_memory=True) 
+    test_loader = DataLoader(test_dataset, batch_size=8,
+                            shuffle=False, num_workers=0, pin_memory=True)                            
+        
     return train_loader, test_loader
 
 def data_visualize(train_loader):
@@ -307,24 +317,26 @@ def training_model(model, train_loader):
         ###################
         # train the model #
         ###################
-        for data in train_loader:
+        for data, noise_less in train_loader:
             # _ stands in for labels, here
             # no need to flatten images
-            images, _ = data
+            # images, _ = data
+            images = data
             
             ## add random noise to the input images
             # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
-            noisy_imgs = images.clone()
+            # noisy_imgs = images.clone()
+            noisy_imgs = noise_less
 
-            for idx, image in enumerate(noisy_imgs):
-                # image[image <= 0.39] = 0
-                image = segmentation_with_masking((255*image).permute(1, 2, 0).numpy())  
-                noisy_imgs[idx] = torch.from_numpy(image).permute(2, 0, 1)
+            # for idx, image in enumerate(noisy_imgs):
+            #     # image[image <= 0.39] = 0
+            #     image = segmentation_with_masking((255*image).permute(1, 2, 0).numpy())  
+            #     noisy_imgs[idx] = torch.from_numpy(image).permute(2, 0, 1)
               
             
 
             # Clip the images to be between 0 and 1
-            noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+            # noisy_imgs = np.clip(noisy_imgs, 0., 1.)
                     
             # clear the gradients of all optimized variables
             optimizer.zero_grad()
@@ -497,8 +509,20 @@ def segmentation_with_masking(img):
     segmented = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
     return segmented
 
- def mask_cropped(img):
-     pass           
+def mask_cropped(image, thresh_mask, dest="imagesSample/croped_masks"):
+    result = cv2.bitwise_and(image, image, mask=thresh_mask)
+    return result
+
+
+# For cropped masking 
+# folder_path="imagesSample"
+# img_files = glob.glob(os.path.join(folder_path,"raw","*.jpg"))
+# for img_path in img_files:
+#     img = np.asarray(Image.open(img_path).convert('RGB'))
+#     mask = np.asarray(Image.open(os.path.join(folder_path,'masks',os.path.basename(img_path))).convert('L'))
+#     cropped = mask_cropped(img, mask)
+#     cv2.imwrite(os.path.join(folder_path,'croped_masks',os.path.basename(img_path)) , cropped)
+
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()

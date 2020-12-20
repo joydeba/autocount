@@ -495,7 +495,10 @@ def segmentation_with_masking(img):
     masked = cv2.drawContours(mask, [cnt],-1, 255, -1)
     dst = cv2.bitwise_and(img, img, mask=mask)
     segmented = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
-    return segmented        
+    return segmented
+
+ def mask_cropped(img):
+     pass           
 
 # data_grouping_COCO()    
 # data_grouping_GWHD()

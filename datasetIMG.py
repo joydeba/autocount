@@ -35,7 +35,7 @@ class DataLoaderInstanceSegmentation(Dataset):
         data = torch.Tensor(data)
 
         label_ins =  np.asarray(Image.open(ins_mask_path).convert('RGB')).transpose((2,0,1))
-        label_ins = torch.Tensor(label_ins[np.newaxis])
+        label_ins = torch.Tensor(label_ins)
 
 
 

@@ -265,7 +265,7 @@ def data_loading():
     # # test_data = datasets.MNIST(root='data', train=False, download=True, transform=transform)
     # test_data = datasets.ImageFolder( root="dataset", transform=transform)
     # # Create training and test dataloaders
-    # num_workers = 0
+    num_workers = 0
     # # how many samples per batch to load
     
     # # prepare data loaders
@@ -274,9 +274,9 @@ def data_loading():
 
     train_dataset = DataLoaderInstanceSegmentation()
     test_dataset = DataLoaderInstanceSegmentation(train = False)
-    train_loader = DataLoader(train_dataset, batch_size=4,
+    train_loader = DataLoader(train_dataset, batch_size=batch_size,
                             shuffle=False, num_workers=0, pin_memory=True) 
-    test_loader = DataLoader(test_dataset, batch_size=8,
+    test_loader = DataLoader(test_dataset, batch_size=batch_size,
                             shuffle=False, num_workers=0, pin_memory=True)                            
         
     return train_loader, test_loader

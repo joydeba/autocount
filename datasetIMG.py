@@ -31,11 +31,13 @@ class DataLoaderInstanceSegmentation(Dataset):
         img_path = self.img_files[index]
         ins_mask_path = self.ins_mask_files[index]
 
-        data =  np.asarray(Image.open(img_path).convert('RGB')).transpose((2,0,1))
-        data = torch.Tensor(data)
+        # data =  np.asarray(Image.open(img_path).convert('RGB')).transpose((2,0,1))
+        # data = torch.Tensor(data)
+        data =  self.to_tensor(Image.open(img_path).convert('RGB'))
 
-        label_ins =  np.asarray(Image.open(ins_mask_path).convert('RGB')).transpose((2,0,1))
-        label_ins = torch.Tensor(label_ins)
+        # label_ins =  np.asarray(Image.open(ins_mask_path).convert('RGB')).transpose((2,0,1))
+        # label_ins = torch.Tensor(label_ins)
+        label_ins =  self.to_tensor(Image.open(ins_mask_path).convert('RGB'))
 
 
 

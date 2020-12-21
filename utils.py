@@ -514,8 +514,8 @@ def mask_cropped(image, thresh_mask, dest="imagesSample/croped_masks"):
     return result
 
 
-# For cropped masking 
-# folder_path="imagesSample"
+# # For cropped masking 
+# folder_path="images_testing"
 # img_files = glob.glob(os.path.join(folder_path,"raw","*.jpg"))
 # for img_path in img_files:
 #     img = np.asarray(Image.open(img_path).convert('RGB'))
@@ -528,7 +528,7 @@ def mask_cropped(image, thresh_mask, dest="imagesSample/croped_masks"):
 # data_grouping_GWHD()
 # data_grouping_BSR()
 # show_image_withAnnotation()
-denoising_autoencoder()
+# denoising_autoencoder()
 # segmentation_with_masking_all()
 
 from ochumanApi.ochuman import OCHuman

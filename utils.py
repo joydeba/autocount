@@ -363,7 +363,8 @@ def training_model(model, train_loader):
 def testing_model(model, test_loader):
     # obtain one batch of test images
     dataiter = iter(test_loader)
-    images, labels = dataiter.next()
+    # images, labels = dataiter.next()
+    images = dataiter.next()
     # add noise to the test images
     # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
     # noisy_imgs = images

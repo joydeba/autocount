@@ -274,10 +274,8 @@ def data_loading():
 
     train_dataset = DataLoaderInstanceSegmentation()
     test_dataset = DataLoaderInstanceSegmentation(train = False)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size,
-                            shuffle=False, num_workers=0, pin_memory=True) 
-    test_loader = DataLoader(test_dataset, batch_size=batch_size,
-                            shuffle=False, num_workers=0, pin_memory=True)                            
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=num_workers) 
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=num_workers)                            
         
     return train_loader, test_loader
 
@@ -413,7 +411,10 @@ def testing_model(model, test_loader):
             ax.imshow(img)
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-    plt.show()    
+    plt.show()
+
+def background_less_images():
+    pass        
 
 
 def denoising_autoencoder():
@@ -427,6 +428,9 @@ def denoising_autoencoder():
     print(model)
     # Training
     training_model(model, train_loader)
+    model_dir = Path('model')
+    modelname = 'model.pth'
+    torch.save(model.state_dict(), model_dir.joinpath(modelname))
     # Testing
     testing_model(model, test_loader)
 
@@ -510,14 +514,14 @@ def segmentation_with_masking(img):
     segmented = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
     return segmented
 
-def mask_cropped(image, thresh_mask, dest="imagesSample/croped_masks"):
+def mask_cropped(image, thresh_mask):
     result = cv2.bitwise_and(image, image, mask=thresh_mask)
     return result
 
 
-# # For cropped masking 
-# folder_path="images"
-# img_files = glob.glob(os.path.join(folder_path,"raw","*.jpg"))
+# For cropped masking 
+# folder_path="inrae_1_all"
+# img_files = glob.glob(os.path.join(folder_path,"images","*.jpg"))
 # for img_path in img_files:
 #     img = np.asarray(Image.open(img_path).convert('RGB'))
 #     mask = np.asarray(Image.open(os.path.join(folder_path,'masks',os.path.basename(img_path))).convert('L'))

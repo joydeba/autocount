@@ -516,7 +516,7 @@ def mask_cropped(image, thresh_mask, dest="imagesSample/croped_masks"):
 
 
 # # For cropped masking 
-# folder_path="images_testing"
+# folder_path="images"
 # img_files = glob.glob(os.path.join(folder_path,"raw","*.jpg"))
 # for img_path in img_files:
 #     img = np.asarray(Image.open(img_path).convert('RGB'))

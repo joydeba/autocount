@@ -19,9 +19,11 @@ class DataLoaderInstanceSegmentation(Dataset):
         self.train = train
         self.img_files = glob.glob(os.path.join(folder_path,"images","*.jpg"))
         self.ins_mask_files = []
+        self.filenames = []
         self.to_tensor = transforms.ToTensor()
         for img_path in self.img_files:
             self.ins_mask_files.append(os.path.join(folder_path,'croped_masks',os.path.basename(img_path)))
+            self.filenames.append(os.path.basename(img_path))
 
 
     def __len__(self):
@@ -30,6 +32,7 @@ class DataLoaderInstanceSegmentation(Dataset):
     def __getitem__(self, index):
         img_path = self.img_files[index]
         ins_mask_path = self.ins_mask_files[index]
+        filename = self.filenames[index]
 
         # data =  np.asarray(Image.open(img_path).convert('RGB')).transpose((2,0,1))
         # data = torch.Tensor(data)
@@ -44,4 +47,4 @@ class DataLoaderInstanceSegmentation(Dataset):
         if self.train:
             return data, label_ins
         else:     
-            return data
+            return data, filename

@@ -11,6 +11,7 @@ import os
 import numpy as np
 from torch.utils.data import DataLoader
 from datasetIMG import DataLoaderInstanceSegmentation
+from pathlib import Path
 
 def data_grouping_GWHD():
     result = {}
@@ -304,7 +305,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 10
+    n_epochs = 1
 
 
 
@@ -360,13 +361,15 @@ def training_model(model, train_loader):
 
 def testing_model(model, test_loader):
     # obtain one batch of test images
+    # dataiter = iter(test_loader)
     dataiter = iter(test_loader)
     # images, labels = dataiter.next()
     images = dataiter.next()
+    names = images[1]
     # add noise to the test images
     # noisy_imgs = images + noise_factor * torch.randn(*images.shape)
     # noisy_imgs = images
-    noisy_imgs = images.clone()
+    noisy_imgs = images[0].clone()
     # for idx, image in enumerate(noisy_imgs):
     #     image[image <= 0.39] = 0
     #     noisy_imgs[idx] = image  
@@ -413,9 +416,32 @@ def testing_model(model, test_loader):
             ax.get_yaxis().set_visible(False)
     plt.show()
 
-def background_less_images():
-    pass        
 
+
+
+def background_less_images(model, test_loader):
+    folder_path="inrae_1_all"
+    for data, labels in test_loader:    
+        dataiter = iter(test_loader)
+        images = dataiter.next()
+        names = images[1]
+        noisy_imgs = images[0].clone()
+        noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+        # get sample outputs
+        output = model(noisy_imgs)
+        # prep images for display
+        noisy_imgs = noisy_imgs.numpy()
+        # output is resized into a batch of iages
+        output = output.view(batch_size, 3, 1024, 1024)
+        # use detach when it's an output that requires_grad
+        output = output.detach().numpy()
+        for img, name in zip(output, names):
+            img = np.transpose( img, (1, 2, 0))
+            im = Image.fromarray(((np.squeeze(img))* 255).astype(np.uint8))
+            if im.mode != 'RGB':
+                im = im.convert('RGB')
+            target_loc = os.path.join(folder_path,'backless_images',name)    
+            im.save(name)
 
 def denoising_autoencoder():
     # Load Data
@@ -425,14 +451,22 @@ def denoising_autoencoder():
     # Construct Model
     # model = ConvDenoiser()
     model = ConvAutoencoder()
+    
     print(model)
     # Training
-    training_model(model, train_loader)
-    model_dir = Path('model')
-    modelname = 'model.pth'
-    torch.save(model.state_dict(), model_dir.joinpath(modelname))
+    # training_model(model, train_loader)
+    # model_dir = Path('model')
+    # modelname = 'model.pth'
+    # torch.save(model.state_dict(), model_dir.joinpath(modelname))
+    
     # Testing
-    testing_model(model, test_loader)
+    # testing_model(model, test_loader)
+    model.eval()
+    model_dir = Path('model')
+    model_path = model_dir.joinpath('model.pth')
+    param = torch.load(model_path)
+    model.load_state_dict(param)
+    background_less_images(model, test_loader)
 
 
 import cv2

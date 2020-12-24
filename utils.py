@@ -305,7 +305,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 1
+    n_epochs = 20
 
 
 
@@ -422,17 +422,16 @@ def testing_model(model, test_loader):
 def background_less_images(model, test_loader):
     folder_path="inrae_1_all"
     for data, labels in test_loader:    
-        dataiter = iter(test_loader)
-        images = dataiter.next()
-        names = images[1]
-        noisy_imgs = images[0].clone()
+        images = data
+        names = labels
+        noisy_imgs = images.clone()
         noisy_imgs = np.clip(noisy_imgs, 0., 1.)
         # get sample outputs
         output = model(noisy_imgs)
         # prep images for display
         noisy_imgs = noisy_imgs.numpy()
         # output is resized into a batch of iages
-        output = output.view(batch_size, 3, 1024, 1024)
+        output = output.view(len(names), 3, 1024, 1024)
         # use detach when it's an output that requires_grad
         output = output.detach().numpy()
         for img, name in zip(output, names):
@@ -441,7 +440,7 @@ def background_less_images(model, test_loader):
             if im.mode != 'RGB':
                 im = im.convert('RGB')
             target_loc = os.path.join(folder_path,'backless_images',name)    
-            im.save(name)
+            im.save(target_loc)
 
 def denoising_autoencoder():
     # Load Data
@@ -454,10 +453,10 @@ def denoising_autoencoder():
     
     print(model)
     # Training
-    # training_model(model, train_loader)
-    # model_dir = Path('model')
-    # modelname = 'model.pth'
-    # torch.save(model.state_dict(), model_dir.joinpath(modelname))
+    training_model(model, train_loader)
+    model_dir = Path('model')
+    modelname = 'model.pth'
+    torch.save(model.state_dict(), model_dir.joinpath(modelname))
     
     # Testing
     # testing_model(model, test_loader)

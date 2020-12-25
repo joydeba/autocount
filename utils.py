@@ -453,10 +453,10 @@ def denoising_autoencoder():
     
     print(model)
     # Training
-    training_model(model, train_loader)
-    model_dir = Path('model')
-    modelname = 'model.pth'
-    torch.save(model.state_dict(), model_dir.joinpath(modelname))
+    # training_model(model, train_loader)
+    # model_dir = Path('model')
+    # modelname = 'model.pth'
+    # torch.save(model.state_dict(), model_dir.joinpath(modelname))
     
     # Testing
     # testing_model(model, test_loader)

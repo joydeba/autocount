@@ -305,7 +305,7 @@ def training_model(model, train_loader):
     # sSecify loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     # Number of epochs to train the model
-    n_epochs = 10
+    n_epochs = 5
 
 
 
@@ -454,17 +454,17 @@ def denoising_autoencoder():
     print(model)
     # Training
     training_model(model, train_loader)
-    model_dir = Path('model')
-    modelname = 'model.pth'
-    torch.save(model.state_dict(), model_dir.joinpath(modelname))
+    # model_dir = Path('model')
+    # modelname = 'model.pth'
+    # torch.save(model.state_dict(), model_dir.joinpath(modelname))
     
     # Testing
     
-    model.eval()
-    model_dir = Path('model')
-    model_path = model_dir.joinpath('model.pth')
-    param = torch.load(model_path)
-    model.load_state_dict(param)
+    # model.eval()
+    # model_dir = Path('model')
+    # model_path = model_dir.joinpath('model.pth')
+    # param = torch.load(model_path)
+    # model.load_state_dict(param)
     testing_model(model, test_loader)
     # background_less_images(model, test_loader)
 

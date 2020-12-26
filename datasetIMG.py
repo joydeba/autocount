@@ -10,14 +10,14 @@ import cv2
 import math 
 
 class DataLoaderInstanceSegmentation(Dataset):
-    def __init__(self, folder_path="images", train = True):
+    def __init__(self, folder_path="ethz_1_all", train = True):
         super(DataLoaderInstanceSegmentation, self).__init__()
         if train:
-            folder_path="images"
+            folder_path="ethz_1_all"
         else:     
-            folder_path="images_testing"
+            folder_path="inrae_1_all"
         self.train = train
-        self.img_files = glob.glob(os.path.join(folder_path,"raw","*.jpg"))
+        self.img_files = glob.glob(os.path.join(folder_path,"images","*.jpg"))
         self.ins_mask_files = []
         self.filenames = []
         self.to_tensor = transforms.ToTensor()
@@ -34,12 +34,8 @@ class DataLoaderInstanceSegmentation(Dataset):
         ins_mask_path = self.ins_mask_files[index]
         filename = self.filenames[index]
 
-        # data =  np.asarray(Image.open(img_path).convert('RGB')).transpose((2,0,1))
-        # data = torch.Tensor(data)
         data =  self.to_tensor(Image.open(img_path).convert('RGB'))
 
-        # label_ins =  np.asarray(Image.open(ins_mask_path).convert('RGB')).transpose((2,0,1))
-        # label_ins = torch.Tensor(label_ins)
         label_ins =  self.to_tensor(Image.open(ins_mask_path).convert('RGB'))
 
 

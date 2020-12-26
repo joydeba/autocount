@@ -465,8 +465,8 @@ def denoising_autoencoder():
     # model_path = model_dir.joinpath('model.pth')
     # param = torch.load(model_path)
     # model.load_state_dict(param)
-    testing_model(model, test_loader)
-    # background_less_images(model, test_loader)
+    # testing_model(model, test_loader)
+    background_less_images(model, test_loader)
 
 
 import cv2

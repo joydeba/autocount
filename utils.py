@@ -420,7 +420,7 @@ def testing_model(model, test_loader):
 
 
 def background_less_images(model, test_loader):
-    folder_path="inrae_1_all"
+    folder_path="images_testing"
     for data, labels in test_loader:    
         images = data
         names = labels

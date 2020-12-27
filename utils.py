@@ -460,11 +460,12 @@ def denoising_autoencoder():
     
     # Testing
     
-    # model.eval()
+    
     # model_dir = Path('model')
     # model_path = model_dir.joinpath('model.pth')
     # param = torch.load(model_path)
     # model.load_state_dict(param)
+    # model.eval()
     # testing_model(model, test_loader)
     background_less_images(model, test_loader)
 
